@@ -1,0 +1,19 @@
+# configs/download.yaml
+paths:
+  raw_audio: "data/raw"
+  clips_audio: "data/clips"
+  meta: "data/meta"
+
+audio:
+  target_sr: 48000
+  mono: true
+  clip_len_sec: 10.0
+
+# 원하는 라벨만 적기(원하면 추가/변경)
+labels: ["Bark", "Howl", "Growling", "Whimper", "Yip", "Bow-wow"]
+
+
+audioset:
+  csv_dir: "data/meta/audioset"      # CSV 넣어둔 폴더
+  use_balanced: true                  # 처음엔 balanced로만 소량 테스트
+  max_samples: 20                     # 매니페스트 개수(처음엔 10~20권장)
