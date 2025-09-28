@@ -9,10 +9,17 @@ dependencies:
   - pytorch
   - torchvision
   - torchaudio
-  - pytorch-cuda=12.8
+  - pytorch-cuda=12.1
   - ffmpeg
   - yt-dlp
   - numpy
   - pandas
   - pyyaml
   - typer
+  - click
+  - librosa
+  - pysoundfile
+  - tqdm
+  - libffi
+  - vc14_runtime
+  - ucrt
