@@ -1,16 +1,12 @@
-# 실행: python scripts\make_manifest_dog.py
 import sys, pathlib
-# lib 경로 추가
 sys.path.append(str(pathlib.Path(__file__).resolve().parents[1] / "lib"))
-
 from pathlib import Path
-import pandas as pd
 from lib.io_utils import write_manifest, MANIFEST_COLUMNS
 from lib.ingest.audioset_dog import build_manifest
 
-AUDIOSET_DIR = Path("data/meta/audioset")  # class_labels_indices.csv 등이 있는 폴더
+AUDIOSET_DIR = Path("data/meta/audioset")     # class_labels_indices.csv 등이 있는 폴더
 OUT_PATH     = Path("data/meta/manifest.tsv")
-PER_LABEL    = 200  # 라벨당 최대 샘플 수
+PER_LABEL    = 200
 
 def main():
     df = build_manifest(str(AUDIOSET_DIR), per_label_quota=PER_LABEL, seed=42)
