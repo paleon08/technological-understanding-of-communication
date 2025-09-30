@@ -1,0 +1,17 @@
+name: corn_snake
+language: en
+anchors:
+  # 소리 형태
+  - hiss
+  - rasp
+  - rustle
+  - tail vibration
+  # 기능/맥락
+  - defensive display
+  - threat display
+  - escape behavior
+  - stress signal
+  - exploratory behavior
+  # 생활사/환경 힌트
+  - enclosure handling
+  - nocturnal activity
