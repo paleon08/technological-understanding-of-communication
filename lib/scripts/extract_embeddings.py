@@ -2,7 +2,7 @@ import sys, pathlib, csv
 sys.path.append(str(pathlib.Path(__file__).resolve().parents[1] / "lib"))
 from pathlib import Path
 import numpy as np
-from lib.features.w2v2 import Wav2Vec2Embedder
+from lib.ops.features.w2v2 import Wav2Vec2Embedder
 
 IN_DIR  = Path("data/clips")
 OUT_DIR = Path("data/embeddings/w2v2")
