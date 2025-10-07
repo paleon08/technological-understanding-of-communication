@@ -6,6 +6,7 @@ from tqdm import tqdm
 from transformers import ClapProcessor, ClapModel
 import torch
 
+
 # ===== 설정 =====
 ANCHOR_DIR = "configs/anchors"
 OUT_DIR = "artifacts/text_anchors"
@@ -17,7 +18,7 @@ os.makedirs(OUT_DIR, exist_ok=True)
 # ===== 모델 로딩 =====
 print(f"[model] loading {MODEL_NAME}")
 processor = ClapProcessor.from_pretrained(MODEL_NAME)
-model = ClapModel.from_pretrained(MODEL_NAME).to(DEVICE)
+model = ClapModel.from_pretrained(MODEL_NAME, use_safetensors=True).to(DEVICE)
 model.eval()
 
 # ===== YML 수집 =====

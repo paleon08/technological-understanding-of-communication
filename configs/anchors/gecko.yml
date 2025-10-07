@@ -1,0 +1,67 @@
+species: crested_gecko
+anchors:
+  - name: tail_waving_slow
+    text: "Tail waving (slow)"
+    meaning: "느리게 꼬리를 흔들며 스트레스를 표현하고 경고 신호를 보냄"
+    context: "포식자나 사람의 접촉 시 두려움 표현, 스트레스 상태"
+    source: "사육자 관찰 및 유사 종(레오파드 게코) 연구 기반"
+
+  - name: tail_vibration_rapid
+    text: "Tail vibration (rapid)"
+    meaning: "빠르게 꼬리를 진동시켜 흥분 또는 공격/구애 신호를 보냄"
+    context: "사냥 직전, 짝짓기 시 수컷의 흥분 표현"
+    source: "레오파드 게코 유사 행동, 관찰 보고 기반"
+
+  - name: territorial_marking
+    text: "Territorial marking (scent rubbing)"
+    meaning: "수컷이 향기 분비물과 꼬리 흔들기로 영역 표시"
+    context: "수컷 간 세력권 다툼, 번식기 영역 방어"
+    source: "사육 관찰 및 Panther Gecko 유사 행동"
+
+  - name: distress_chirping
+    text: "Distress chirping"
+    meaning: "두려움이나 불편함을 나타내는 짧은 울음소리"
+    context: "포획, 놀람, 스트레스 상황"
+    source: "관찰 및 게코류 공통 음성 보고"
+
+  - name: barking_call
+    text: "Barking call"
+    meaning: "짖는 듯한 발성으로 영역 또는 번식 신호 전달"
+    context: "야간 활동 중 수컷의 구애 또는 경계 표현"
+    source: "사육자 보고 및 게코류 음성 의사소통 유사 사례"
+
+  - name: head_shaking
+    text: "Head shaking (refusal)"
+    meaning: "머리를 흔들어 거부 또는 싫음을 표현"
+    context: "접촉 거부, 수컷 교미 시도 거부"
+    source: "관찰 기반 행동 보고"
+
+  - name: open_mouth_threat
+    text: "Open-mouth threat"
+    meaning: "입을 벌려 상대를 위협, 공격 경고 신호"
+    context: "극도의 위협 상황, 방어 자세"
+    source: "관찰 사례 및 도마뱀붙이류 공통 방어행동"
+
+  - name: mating_bite
+    text: "Mating bite"
+    meaning: "수컷이 암컷의 몸을 살짝 물며 교미 자세 고정"
+    context: "짝짓기 시도 중 또는 교미 중"
+    source: "게코류 교미 행동 문헌 보고"
+
+  - name: escape_jump
+    text: "Escape jump"
+    meaning: "위협 시 갑작스럽게 점프하여 도주"
+    context: "포식자 회피 또는 놀람 상황"
+    source: "크레스티드 게코 및 유사종 관찰 기록"
+
+  - name: tail_autotomy
+    text: "Tail autotomy"
+    meaning: "꼬리를 절단해 주의를 끌고 도망"
+    context: "포식자 접촉 또는 극심한 스트레스 상황"
+    source: "문헌 및 생태학적 보고 (caudal autotomy)"
+
+  - name: fired_down_calm
+    text: "Fired-down calm"
+    meaning: "색이 옅어지고 움직임이 느려지는 평온 상태"
+    context: "낮 시간 휴식, 익숙한 환경, 무스트레스 상태"
+    source: "fire-up/down 연구 및 사육 보고 기반"
