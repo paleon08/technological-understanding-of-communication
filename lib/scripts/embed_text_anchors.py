@@ -32,20 +32,36 @@ for path in files:
         yml = yaml.safe_load(f)
 
     name = yml.get("name") or Path(path).stem
-    anchors = yml.get("anchors") or []
-    if not anchors:
+    anchors_raw = yml.get("anchors") or []
+    if not anchors_raw:
         print(f"[skip] {name}: no anchors")
         continue
 
-    print(f"[embed] {name} ({len(anchors)} anchors)")
+    # dict/str 모두 대응해서 텍스트만 추출
+    def to_text(a):
+        if isinstance(a, str):
+            return a
+        if isinstance(a, dict):
+            return a.get("text") or a.get("name") or a.get("meaning")
+        return None
+
+    anchor_texts = [ (t.strip() if isinstance(t, str) else None) for t in (to_text(a) for a in anchors_raw) ]
+    anchor_texts = [t for t in anchor_texts if t]  # None/빈문자 제거
+    anchor_texts = list(dict.fromkeys(anchor_texts))  # 중복 제거(순서 유지)
+
+    if not anchor_texts:
+        print(f"[skip] {name}: no usable text fields in anchors")
+        continue
+
+    print(f"[embed] {name} ({len(anchor_texts)} anchors)")
     with torch.no_grad():
-        inputs = processor(text=anchors, return_tensors="pt", padding=True, truncation=True)
+        inputs = processor(text=anchor_texts, return_tensors="pt", padding=True, truncation=True)
         inputs = {k: v.to(DEVICE) for k, v in inputs.items()}
         emb = model.get_text_features(**inputs)
         emb = torch.nn.functional.normalize(emb, dim=-1).cpu().numpy()
 
-    # 저장
-    meta = pd.DataFrame({"index": list(range(len(anchors))), "text": anchors})
+    # 저장도 texts 기준으로
+    meta = pd.DataFrame({"index": list(range(len(anchor_texts))), "text": anchor_texts})
     meta.to_csv(os.path.join(OUT_DIR, f"{name}.csv"), index=False)
     np.save(os.path.join(OUT_DIR, f"{name}.npy"), emb)
     print(f"  -> saved {name}.npy / {name}.csv")
