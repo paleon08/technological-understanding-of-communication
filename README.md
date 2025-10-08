@@ -1,42 +1,52 @@
-좋아, README에 넣을 수 있는 **전체 과정 절차도**를 준비했어.
-이건 단순한 폴더 구조 설명이 아니라, **“이 프로젝트가 실제로 어떻게 작동하는지”를 단계별로 한눈에 보는 절차 요약**이야.
-너의 연구형 목적(콘스네이크/크레 언어 지도 실험)을 고려해서 직관적으로 구성했어.
+좋은 지적이야 — 지금 네 **최종 목표(“CLAP의 언어 의미 공간만 활용해서, 앵커·행동·지식 기반으로 종별 의미를 매핑”)** 를 기준으로 보면, 내가 아까 써준 절차 중 일부는 ‘실제 오디오 실험용’ 절차라서 불필요하게 복잡했어.
+지금 상황에 맞게 **불필요한 파이프라인을 걷어낸 최소 절차도**를 다시 정리해 줄게.
 
 ---
 
-## 🔄 전체 절차 개요 (Project Pipeline Overview)
+## 🎯 현재 목표 기반: “언어 지도 조정용 최소 절차”
 
-이 프로젝트는 동물의 행동·진동·소리를 **언어적 의미 벡터 공간(CLAP)**에 투사하여,
-“적은 데이터로도 의사소통 신호를 해석할 수 있는 시스템”을 구현하기 위한 실험 파이프라인이다.
+### 핵심 개념
+
+* **CLAP의 자연어 의미 공간만 사용**
+* 오디오 신호 → 임베딩 변환은 나중에 (또는 생략)
+* 현재 단계에서는 **텍스트 앵커 + 모델 내부 의미 좌표만으로** 종별 의미 지도 구축
 
 ---
 
-### 🧩 **1️⃣ 앵커 설계 (Anchor Design)**
+## 🧩 간소화된 전체 절차 (불필요 단계 제거판)
 
-**목적:**
-각 종(예: 콘스네이크, 크레스티드 게코)의 대표 행동과 그 의미를
-짧은 문장 형태로 기술하여 **텍스트 의미 기준점(Anchor)**을 만든다.
-
-**작업 파일:**
-`configs/anchors/{species}.yml`
-
-**출력 예시:**
-
-```yaml
-name: cornsnake
-anchors:
-  - "rapid tail vibration on dry leaves as defensive warning"
-  - "slow exploratory tongue flicking when sensing prey"
-  - "open-mouth hiss indicating threat"
+```
+(1) 앵커 작성 ─→ (2) 텍스트 임베딩 생성 ─→ (3) 의미 매칭 및 시각화 ─→ (4) 조정 및 지식 기반 확장
 ```
 
 ---
 
-### 🧮 **2️⃣ 앵커 임베딩 생성 (Anchor Embedding)**
+### 🧠 **1️⃣ 앵커 설계 (Anchor Definition)**
 
 **목적:**
-CLAP 모델(`laion/clap-htsat-unfused`)을 이용해
-각 앵커 문장을 **공통 임베딩 공간**으로 변환한다.
+각 종의 대표적 행동 + 그 의미를 텍스트 문장으로 정의.
+이게 사실상 “해석 기준점(semantic pivot)” 역할을 함.
+
+**파일:**
+`configs/anchors/{species}.yml`
+
+**예시:**
+
+```yaml
+name: crestedgecko
+anchors:
+  - "tail wave for defense warning"
+  - "slow head tilt as curiosity behavior"
+  - "rapid limb vibration for stress signal"
+```
+
+---
+
+### 🧮 **2️⃣ 텍스트 임베딩 생성 (Text Embedding via CLAP)**
+
+**목적:**
+CLAP 모델의 **언어 임베딩 공간**에서 각 앵커 문장을 벡터로 변환.
+→ `artifacts/text_anchors/{species}.npy` 로 저장.
 
 **명령어:**
 
@@ -44,142 +54,88 @@ CLAP 모델(`laion/clap-htsat-unfused`)을 이용해
 python lib/scripts/embed_text_anchors.py
 ```
 
-**출력:**
-`artifacts/text_anchors/{species}.npy / .csv`
-
-* `.npy` → 각 문장의 벡터(1024차원 등)
-* `.csv` → 원문 + 인덱스 메타데이터
+이 단계는 **“모델의 언어 의미 좌표계 확보”**를 의미.
+이후 이 좌표계가 “언어 지도”의 뼈대가 된다.
 
 ---
 
-### 🔊 **3️⃣ 테스트 입력(오디오/텍스트) 준비**
+### 🔗 **3️⃣ 의미 매칭 및 시각화 (Semantic Mapping & Visualization)**
 
 **목적:**
-실제 실험 입력(오디오/진동/텍스트)을 준비한다.
+동일한 공간에 인간 언어(설명/논문/지식 기반 문장)를 투영하여
+**행동 ↔ 의미 간의 위치 관계를 관찰/분류**한다.
 
-* 오디오 신호: `data/test/*.wav`
-* 없는 경우 합성 신호 생성:
+**예시 흐름:**
 
-  ```bash
-  python scripts/synth_audio.py --out_dir data/test
-  ```
+```
+anchor_embeddings.npy
+        ↓
+LLM 또는 텍스트 입력(예: "stress response", "defensive vibration")
+        ↓
+코사인 유사도 계산 (Top-K)
+        ↓
+언어 지도(UMAP, t-SNE 등)로 시각화
+```
+
+> 오디오 없음.
+> 대신 “텍스트 기반 의미 지도(Textual Semantic Map)”로 종별 구분·근접도 분석 가능.
 
 ---
 
-### 🤖 **4️⃣ 모델 로드 및 추론 (Inference)**
+### 🧭 **4️⃣ 조정 및 지식 기반 확장 (Knowledge-Guided Adjustment)**
 
 **목적:**
-CLAP 모델로 입력(오디오/텍스트)을 임베딩 → 앵커 임베딩과 유사도 비교.
+앵커와 문헌 기반 지식(논문·사육 관찰 기록 등)을 연결해
+**의미 벡터의 위치를 보정하거나 그룹화**.
 
-**명령어:**
+**방법:**
 
-```bash
-python scripts/infer_text.py  --texts "defensive hiss"
-python scripts/infer_audio.py --audio_dir data/test
-```
-
-**동작:**
-
-1. CLAP Processor/Model 로드
-2. 입력 → 임베딩 변환
-3. 코사인 유사도 계산
-4. Top-K 유사 앵커 표시
-
-**출력 예시:**
-
-```
-[input-text] defensive hiss
-  1. cornsnake: open-mouth hiss indicating threat  cos=0.93
-  2. crestedgecko: defensive clicking  cos=0.77
-```
+* CLAP의 의미 벡터에 LLM을 통해 설명 문장 추가 → 확장된 앵커 세트 생성
+* 동일 행동을 여러 문장으로 표현해 “언어적 다양성” 확보
+* 의미 군집화로 종별 행동 패턴 차이 관찰
 
 ---
 
-### 🧠 **5️⃣ 프로토타입 생성 (선택 단계)**
+## 🚀 **이 방식의 장점**
 
-**목적:**
-비슷한 앵커 여러 개를 평균내어 의미 그룹(예: defense, courtship 등) 단위로 안정화.
-
-**작업:**
-`artifacts/prototypes/{species}_proto.npy` 생성
-(옵션: `scripts/make_prototypes_by_keywords.py` 사용)
-
----
-
-### 📈 **6️⃣ 결과 저장 및 진단 (Logging & Diagnostics)**
-
-**목적:**
-각 단계의 정상 동작과 문제를 확인하고 결과를 축적.
-
-* 결과: `artifacts/logs/end2end_last.json`
-* 포함 정보:
-
-  * 입력 목록
-  * 유사도 상위 결과
-  * 모델/디바이스 정보
-  * 에러/차원 불일치 여부
+| 항목       | CLAP 오디오 방식    | 현재(언어 지도 중심) 방식    |
+| -------- | -------------- | ------------------ |
+| 데이터 요구량  | 매우 높음          | 거의 없음              |
+| 필요 자원    | 오디오, FFT 등 전처리 | 텍스트 기반             |
+| 실험 속도    | 느림             | 매우 빠름              |
+| 조정 난이도   | 높음             | 낮음                 |
+| 주 목적 부합도 | 중간             | 매우 높음 (언어지도 중심 연구) |
 
 ---
 
-### 🧩 **7️⃣ 확장/조정 (Optional Fine-tuning or Mapping)**
+## 📄 README에 들어갈 절차 요약 (최종본)
 
-**목적:**
-데이터가 확보되면 종별 차이를 반영한 조정 시도.
+```markdown
+## 🧭 Project Process Overview (Text-based Semantic Mapping)
 
-**방식:**
+1️⃣ **Anchor Definition**
+   - 각 종의 행동 및 의미를 텍스트 문장(YAML)으로 정의.
+   - 예: "rapid tail vibration as defense signal"
 
-* 임계치(Threshold) 보정
-* 온도 파라미터(τ) 조정
-* 회전(Procrustes alignment)
-* 프로토타입 기반 지도 학습
+2️⃣ **Text Embedding (CLAP Language Space)**
+   - CLAP의 언어 모듈을 사용해 각 앵커를 임베딩.
+   - 결과: `artifacts/text_anchors/{species}.npy / .csv`
 
-이 단계는 나중에 LLM 리서치(예: 행동 의미 텍스트 해석 자동 생성)와 결합할 수 있음.
+3️⃣ **Semantic Matching & Visualization**
+   - 새로운 텍스트 입력(논문, 관찰 설명 등)을 같은 공간에 투영.
+   - 코사인 유사도로 근접 앵커 탐색 및 UMAP 시각화.
 
----
+4️⃣ **Knowledge-based Adjustment**
+   - 관찰/논문 정보를 LLM이 해석 → 의미 기반 조정 및 확장.
+   - 종별 행동 의미 지도 업데이트.
 
-### 🚀 **8️⃣ 실험 반복 및 개선**
-
-* 앵커 추가 / 수정
-* 오디오 신호 다양화
-* 종별 비교 실험(콘 vs 크레)
-* 의미 군집화 / 지도 시각화
-
----
-
-## 🧭 전체 절차 흐름 요약
-
-```
-(1) YML 작성 ─→ (2) 임베딩 생성 ─→ (3) 입력 준비 ─→ (4) 추론 실행
-      │                  │                     │
-      ▼                  ▼                     ▼
-   anchors.yml     text_anchors.npy         Top-K 결과
-                        │
-                        ▼
-              (5) 프로토타입 생성
-                        │
-                        ▼
-              (6) 로그/진단 저장
-                        │
-                        ▼
-          (7) 조정 & (8) 반복 개선
+> ⚙️ 오디오 신호 단계는 제외됨.  
+> 본 실험은 **CLAP의 언어 의미 공간을 직접 활용하는 텍스트 중심 의사소통 모델링**임.
 ```
 
 ---
 
-원하면 이 절차도를 README에 그래픽(mermaid 다이어그램) 형태로 넣을 수도 있어.
-예를 들어 이런 식으로 표현 가능해:
-
-```mermaid
-flowchart TD
-  A[Anchor YML 작성] --> B[CLAP 임베딩 생성]
-  B --> C[오디오/텍스트 입력]
-  C --> D[CLAP 추론 → Top-K 앵커]
-  D --> E[로그 저장 및 진단]
-  E --> F[프로토타입 생성]
-  F --> G[종별 조정/개선]
-```
-
----
-
-원해?
-그럼 mermaid 코드 버전까지 포함된 README용 완성본 형태로 만들어줄게.
+원하면 위 내용을 기반으로
+`README.md`에 들어갈 **최종 절차도 (mermaid 다이어그램)** 도 만들어 줄게.
+텍스트 기반 파이프라인으로 딱 맞춘 형태로.
+그렇게 해줄까?
