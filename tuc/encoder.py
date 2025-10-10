@@ -31,6 +31,11 @@ def _safe_text_embed(texts: _List[str]) -> _np.ndarray:
         out[i] = v / (_np.linalg.norm(v) + 1e-12)
     return out
 
+def encode_text(texts: list[str]) -> _np.ndarray:
+    """문장 리스트 -> L2 정규화 임베딩 행렬 [N,D]"""
+    E = _safe_text_embed(texts).astype(_np.float32)
+    norms = _np.linalg.norm(E, axis=1, keepdims=True) + 1e-9
+    return E / norms
 
 class Projector:
     """z → q 로 투영(정렬 없음 버전). configs/projection.yml 있으면 불러 사용.

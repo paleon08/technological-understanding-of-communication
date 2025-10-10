@@ -3,9 +3,9 @@ from __future__ import annotations
 from pathlib import Path
 import yaml, csv, numpy as np
 
-ROOT = Path(__file__).resolve().parents[1]
-CFG = ROOT.parent / "configs"
-ART = ROOT.parent / "artifacts" / "text_anchors"
+ROOT = Path(__file__).resolve().parents[1]         # 프로젝트 루트(OK)
+CFG  = ROOT / "configs"                            # ❌ ROOT.parent 아님
+ART  = ROOT / "artifacts" / "text_anchors"         # ❌ ROOT.parent 아님
 
 def load_anchor_yamls():
     for p in sorted((CFG / "anchors").glob("*.yml")):

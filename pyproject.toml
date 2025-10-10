@@ -10,7 +10,8 @@ build-backend = "setuptools.build_meta"
 
 # ⬇️ 이것이 핵심 (src 레이아웃)
 [tool.setuptools]
-package-dir = {"" = "src"}
+packages = ["tuc"]
+package-dir = { "tuc" = "tuc" }
 
 [tool.setuptools.packages.find]
 where = ["src"]

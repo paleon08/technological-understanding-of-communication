@@ -1,0 +1,6 @@
+query,rank,score,species,name,text,meaning,context
+경계 상황에서 꼬리 진동,1,0.331970,cornsnake,courtship_tail_quiver,Courtship tail quiver,교미 전 수컷이 꼬리를 미세하게 진동,짝짓기 중 암컷 수용 유도
+경계 상황에서 꼬리 진동,2,0.329914,cornsnake,s_coil_pose,S-coil strike pose,머리를 뒤로 감아 공격 준비 자세를 취함,도망 불가 시 방어 태세 진입
+경계 상황에서 꼬리 진동,3,0.329914,crested_gecko,tail_waving_slow,Tail waving (slow),느리게 꼬리를 흔들며 스트레스를 표현하고 경고 신호를 보냄,"포식자나 사람의 접촉 시 두려움 표현, 스트레스 상태"
+경계 상황에서 꼬리 진동,4,0.328976,crested_gecko,tail_vibration_rapid,Tail vibration (rapid),빠르게 꼬리를 진동시켜 흥분 또는 공격/구애 신호를 보냄,"사냥 직전, 짝짓기 시 수컷의 흥분 표현"
+경계 상황에서 꼬리 진동,5,0.318728,cornsnake,calm_tongue_flicking,Calm tongue flicking,혀를 느리게 내밀며 환경 탐색,"안정 상태, 무스트레스 상황"

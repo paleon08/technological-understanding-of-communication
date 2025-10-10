@@ -3,8 +3,8 @@ import argparse, yaml, numpy as np
 from pathlib import Path
 
 # CLAP 텍스트 임베더 (이미 교체한 파일을 그대로 재사용)
-from .tuc.encoder import encode_text
-from .tuc.io import ART
+from tuc.encoder import encode_text
+from tuc.io import ART
 
 def l2n(v): 
     n = np.linalg.norm(v, axis=-1, keepdims=True) + 1e-9
