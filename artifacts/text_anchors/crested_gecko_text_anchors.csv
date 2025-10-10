@@ -10,3 +10,6 @@ crested_gecko,mating_bite,Mating bite,수컷이 암컷의 몸을 살짝 물며 �
 crested_gecko,escape_jump,Escape jump,위협 시 갑작스럽게 점프하여 도주,포식자 회피 또는 놀람 상황,8
 crested_gecko,tail_autotomy,Tail autotomy,꼬리를 절단해 주의를 끌고 도망,포식자 접촉 또는 극심한 스트레스 상황,9
 crested_gecko,fired_down_calm,Fired-down calm,색이 옅어지고 움직임이 느려지는 평온 상태,"낮 시간 휴식, 익숙한 환경, 무스트레스 상태",10
+crested_gecko,startle_chirp,Startle chirp (짧은 찍 소리),놀람/경계,갑작스런 자극 직후,11
+crested_gecko,freeze,Freeze posture (2–5s immobility),경계/탐색,낯선 물체 정지 노출,12
+crested_gecko,exploration,Slow exploration with head turns,탐색,안정 상태에서 주변 탐색,13

@@ -1,0 +1,15 @@
+numpy==1.26.4
+pandas==2.2.2
+pyyaml==6.0.1
+umap-learn==0.5.6
+scikit-learn==1.4.2
+
+[audio]
+librosa==0.10.2.post1
+soundfile==0.12.1
+transformers==4.42.3
+torch==2.2.2
+torchaudio==2.2.2
+
+[text]
+sentence-transformers==2.2.2
