@@ -1,17 +1,17 @@
-import argparse, numpy as np
+import sys, argparse, numpy as np
 from pathlib import Path
+ROOT = Path(__file__).resolve().parents[2]
+if str(ROOT) not in sys.path: sys.path.insert(0, str(ROOT))
+from tuc.alignment import apply_alignment
 
 ap = argparse.ArgumentParser()
-ap.add_argument("--input", required=True)     # 행동 임베딩 벡터 .npy (shape [d_b])
-ap.add_argument("--W", required=True)         # behavior_to_text_W.npy
+ap.add_argument("--input", required=True)  # behavior vector .npy
+ap.add_argument("--W", required=True)      # behavior_to_text_W.npy
 ap.add_argument("--out", default=None)
 args = ap.parse_args()
 
-b = np.load(args.input).astype("float32")
-if b.ndim>1: b=b.reshape(-1)
-W = np.load(args.W).astype("float32")
-v = b @ W
-v = v / (np.linalg.norm(v)+1e-9)
+b = np.load(args.input); W = np.load(args.W)
+v = apply_alignment(b, W)
 if args.out:
     np.save(args.out, v.astype("float32"))
-print("ok; vec:", v.shape)
+print("ok:", v.shape)

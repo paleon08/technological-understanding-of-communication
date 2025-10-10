@@ -65,3 +65,18 @@ anchors:
     meaning: "색이 옅어지고 움직임이 느려지는 평온 상태"
     context: "낮 시간 휴식, 익숙한 환경, 무스트레스 상태"
     source: "fire-up/down 연구 및 사육 보고 기반"
+
+  - name: startle_chirp
+    text: "Startle chirp (짧은 찍 소리)"
+    meaning: "놀람/경계"
+    context: "갑작스런 자극 직후"
+
+  - name: freeze
+    text: "Freeze posture (2–5s immobility)"
+    meaning: "경계/탐색"
+    context: "낯선 물체 정지 노출"
+
+  - name: exploration
+    text: "Slow exploration with head turns"
+    meaning: "탐색"
+    context: "안정 상태에서 주변 탐색"

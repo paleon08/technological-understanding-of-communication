@@ -1,0 +1,103 @@
+version: 2
+
+global_adjust:
+  center: true          # 전종 평균 제거(권장)
+  whiten: false
+  dim_keep: 512
+  temperature: 1.0
+  dimension_weights: [] # 필요 시 특정 차원 가중치(기본 비활성)
+
+species_adjust:
+  - species: cornsnake
+    anchor_scales:      # 처음엔 전부 1.0(중립) → 실험하며 ±0.05~0.15로 미세 조정
+      - { name: tail_vibration,        scale: 1.0 }
+      - { name: defensive_hiss,        scale: 1.0 }
+      - { name: body_flattening,       scale: 1.0 }
+      - { name: s_coil_pose,           scale: 1.0 }
+      - { name: bluff_strike,          scale: 1.0 }
+      - { name: musking,               scale: 1.0 }
+      - { name: freezing,              scale: 1.0 }
+      - { name: rapid_fleeing,         scale: 1.0 }
+      - { name: pheromone_trailing,    scale: 1.0 }
+      - { name: male_combat,           scale: 1.0 }
+      - { name: courtship_tail_quiver, scale: 1.0 }
+      - { name: calm_tongue_flicking,  scale: 1.0 }
+
+    # model_data.json의 의미/컨텍스트를 고려해 기본적으로 유용한 키워드만 선반영
+    # (영문/한글/어형 변형을 혼합. 필요 없으면 줄여도 됨)
+    keyword_boosts:
+      - { keyword: defensive,   scale: 1.05 }   # 'defensive display' 계열
+      - { keyword: deterrent,   scale: 1.03 }
+      - { keyword: defense,     scale: 1.05 }
+      - { keyword: warning,     scale: 1.05 }
+      - { keyword: threat,      scale: 1.05 }
+      - { keyword: 방어,          scale: 1.05 }
+      - { keyword: 경고,          scale: 1.05 }
+      - { keyword: 위협,          scale: 1.05 }
+
+      - { keyword: stress,      scale: 1.05 }
+      - { keyword: 스트레스,       scale: 1.05 }
+
+      - { keyword: escape,      scale: 1.05 }
+      - { keyword: flee,        scale: 1.05 }
+      - { keyword: 도피,          scale: 1.05 }
+
+      - { keyword: courtship,   scale: 1.03 }
+      - { keyword: breeding,    scale: 1.03 }
+      - { keyword: 구애,          scale: 1.03 }
+      - { keyword: 번식,          scale: 1.03 }
+
+      - { keyword: explore,     scale: 1.02 }
+      - { keyword: exploration, scale: 1.02 }
+      - { keyword: 탐색,          scale: 1.02 }
+      - { keyword: pheromone,   scale: 1.02 }
+      - { keyword: 페로몬,        scale: 1.02 }
+
+      - { keyword: calm,        scale: 0.98 }   # 과도한 ‘평온’ 편향을 살짝 억제
+      - { keyword: 휴식,          scale: 0.98 }
+      - { keyword: 평온,          scale: 0.98 }
+
+  - species: crested_gecko
+    anchor_scales:
+      - { name: tail_waving_slow,     scale: 1.0 }
+      - { name: tail_vibration_rapid, scale: 1.0 }
+      - { name: territorial_marking,  scale: 1.0 }
+      - { name: distress_chirping,    scale: 1.0 }
+      - { name: barking_call,         scale: 1.0 }
+      - { name: head_shaking,         scale: 1.0 }
+      - { name: open_mouth_threat,    scale: 1.0 }
+      - { name: mating_bite,          scale: 1.0 }
+      - { name: escape_jump,          scale: 1.0 }
+      - { name: tail_autotomy,        scale: 1.0 }
+      - { name: fired_down_calm,      scale: 1.0 }
+
+    keyword_boosts:
+      - { keyword: defensive,   scale: 1.05 }
+      - { keyword: defense,     scale: 1.05 }
+      - { keyword: warning,     scale: 1.05 }
+      - { keyword: threat,      scale: 1.05 }
+      - { keyword: 방어,          scale: 1.05 }
+      - { keyword: 경고,          scale: 1.05 }
+      - { keyword: 위협,          scale: 1.05 }
+
+      - { keyword: stress,      scale: 1.05 }
+      - { keyword: 스트레스,       scale: 1.05 }
+
+      - { keyword: escape,      scale: 1.05 }
+      - { keyword: 도피,          scale: 1.05 }
+      - { keyword: autotomy,    scale: 1.05 }
+      - { keyword: 꼬리절단,       scale: 1.05 }
+
+      - { keyword: territorial, scale: 1.03 }
+      - { keyword: marking,     scale: 1.03 }
+      - { keyword: scent,       scale: 1.03 }
+      - { keyword: 영역,          scale: 1.03 }
+      - { keyword: 표식,          scale: 1.03 }
+
+      - { keyword: chirp,       scale: 1.02 }
+      - { keyword: bark,        scale: 1.02 }
+      - { keyword: 울음,          scale: 1.02 }
+
+      - { keyword: calm,        scale: 0.98 }
+      - { keyword: 휴식,          scale: 0.98 }
+      - { keyword: 평온,          scale: 0.98 }
