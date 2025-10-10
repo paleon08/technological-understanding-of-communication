@@ -1,17 +1,26 @@
+# scripts/align_apply.py
 import sys, argparse, numpy as np
 from pathlib import Path
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path: sys.path.insert(0, str(ROOT))
-from tuc.alignment import apply_alignment
+try:
+    from tuc.alignment import apply_alignment
+except ModuleNotFoundError:
+    from tuc.alignment import apply_alignment
 
-ap = argparse.ArgumentParser()
-ap.add_argument("--input", required=True)  # behavior vector .npy
-ap.add_argument("--W", required=True)      # behavior_to_text_W.npy
-ap.add_argument("--out", default=None)
-args = ap.parse_args()
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--input", required=True, help="behavior vector .npy")
+    ap.add_argument("--W", required=True, help="behavior_to_text_W.npy")
+    ap.add_argument("--out", default=None)
+    args = ap.parse_args()
 
-b = np.load(args.input); W = np.load(args.W)
-v = apply_alignment(b, W)
-if args.out:
-    np.save(args.out, v.astype("float32"))
-print("ok:", v.shape)
+    b = np.load(args.input); W = np.load(args.W)
+    v = apply_alignment(b, W)
+    if args.out:
+        Path(args.out).parent.mkdir(parents=True, exist_ok=True)
+        np.save(args.out, v.astype("float32"))
+    print("ok:", v.shape)
+
+if __name__ == "__main__":
+    main()

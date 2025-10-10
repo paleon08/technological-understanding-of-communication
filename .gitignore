@@ -1,8 +1,6 @@
+artifacts/
 data/
-models/
-logs/
-*.pt
-*.ckpt
-.ipynb_checkpoints/
-.DS_Store
-.venv/
+*.npy
+*.wav
+**/__pycache__/
+*.pyc

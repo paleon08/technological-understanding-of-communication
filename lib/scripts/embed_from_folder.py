@@ -1,7 +1,7 @@
 # scripts/embed_from_folder.py
 from pathlib import Path
 import argparse, numpy as np, pandas as pd
-from lib.ops.features.w2v2 import Wav2Vec2Embedder
+from tuc.ops.features.w2v2 import Wav2Vec2Embedder
 
 def embed_dir(in_dir: Path, out_dir: Path):
     wavs = sorted([p for p in in_dir.rglob("*") if p.suffix.lower() in [".wav",".mp3",".flac",".ogg",".m4a"]])

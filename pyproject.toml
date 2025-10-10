@@ -1,18 +1,21 @@
 [project]
 name = "tuc"
-version = "0.1.0"
+version = "0.2.0"
+description = "Technological Understanding of Communication - anchor-based embedding workspace"
 requires-python = ">=3.9"
-dependencies = ["typer","pyyaml","pandas"]
+dependencies = [
+  "numpy",
+  "pandas",
+  "pyyaml"
+]
+# SBERT 가속을 쓰려면 선택적으로 설치: pip install sentence-transformers
 
 [build-system]
 requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
-# ⬇️ 이것이 핵심 (src 레이아웃)
 [tool.setuptools]
 packages = ["tuc"]
-package-dir = { "tuc" = "tuc" }
 
-[tool.setuptools.packages.find]
-where = ["src"]
-include = ["tuc*"]
+[project.scripts]
+tuc = "tuc.cli:main"

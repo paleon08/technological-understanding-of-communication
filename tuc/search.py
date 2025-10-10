@@ -8,13 +8,17 @@ def _cosine(a: np.ndarray, B: np.ndarray) -> np.ndarray:
     return (a.reshape(1, -1) @ B.T).ravel()
 
 def nearest_overall(k: int = 5, queries: list[str] | None = None):
+    """
+    Export top-k nearest anchors for each query in configs/queries.txt -> CSV.
+    Output: artifacts/text_anchors/nearest_overall_top{k}.csv
+    """
     X, metas = load_species_vectors()
     if X is None:
         raise RuntimeError("No embeddings found. Build or Adjust first.")
     if queries is None:
         queries = load_queries()
     if not queries:
-        print("[warn] no queries"); return None
+        raise RuntimeError("No queries to run. Add lines to configs/queries.txt")
 
     out = ART / f"nearest_overall_top{k}.csv"
     with out.open("w", newline="", encoding="utf-8") as f:
@@ -23,35 +27,42 @@ def nearest_overall(k: int = 5, queries: list[str] | None = None):
         for q in queries:
             qv = encode_text([q])[0]
             sc = _cosine(qv, X); idx = np.argsort(-sc)[:k]
-            for rnk, i in enumerate(idx, 1):
+            for rnk, i in enumerate(idx, start=1):
                 m = metas[i]
-                w.writerow({"query": q, "rank": rnk, "score": f"{float(sc[i]):.6f}",
-                            "species": m["species"], "name": m["name"], "text": m["text"],
-                            "meaning": m["meaning"], "context": m["context"]})
+                w.writerow({
+                    "query": q,
+                    "rank": rnk,
+                    "score": f"{float(sc[i]):.6f}",
+                    "species": m.get("species",""),
+                    "name": m.get("name",""),
+                    "text": m.get("text",""),
+                    "meaning": m.get("meaning",""),
+                    "context": m.get("context",""),
+                })
     return out
 
-def nearest_from_vector(vec: np.ndarray, k: int = 5, return_csv: bool = True):
-    """전처리된 입력 임베딩(vec)으로 앵커 Top-K 검색."""
+def nearest_from_vector(vec: np.ndarray, k: int = 5):
+    """
+    Return list[dict] for a single vector input (already normalized preferred).
+    """
     X, metas = load_species_vectors()
     if X is None:
         raise RuntimeError("No embeddings found. Build or Adjust first.")
-    # 정규화 가정: vec가 L2-normalized가 아니면 normalize
-    v = vec.astype("float32")
+    v = vec.reshape(-1).astype("float32")
     n = np.linalg.norm(v) + 1e-9
     v = v / n
-    sc = _cosine(v, X); idx = np.argsort(-sc)[:k]
-    rows = []
-    for rnk, i in enumerate(idx, 1):
+    sc = (v.reshape(1,-1) @ X.T).ravel()
+    idx = np.argsort(-sc)[:k]
+    out = []
+    for rnk, i in enumerate(idx, start=1):
         m = metas[i]
-        rows.append({
-            "rank": rnk, "score": float(sc[i]),
-            "species": m["species"], "name": m["name"], "text": m["text"],
-            "meaning": m["meaning"], "context": m["context"],
+        out.append({
+            "rank": rnk,
+            "score": float(sc[i]),
+            "species": m.get("species",""),
+            "name": m.get("name",""),
+            "text": m.get("text",""),
+            "meaning": m.get("meaning",""),
+            "context": m.get("context",""),
         })
-    if not return_csv:
-        return rows
-
-    out = ART / f"nearest_input_top{k}.csv"
-    import pandas as pd
-    pd.DataFrame(rows).to_csv(out, index=False)
     return out

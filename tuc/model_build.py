@@ -6,10 +6,15 @@ from .io import load_anchor_yamls, save_species_vectors, write_global_2d
 
 def _svd2d(X: np.ndarray) -> np.ndarray:
     Xc = X - X.mean(0, keepdims=True)
-    U,S,Vt = np.linalg.svd(Xc, full_matrices=False)
-    return Xc @ Vt[:2].T
+    U, S, Vt = np.linalg.svd(Xc, full_matrices=False)
+    return (Xc @ Vt[:2].T).astype("float32")
 
 def build_all():
+    """
+    Build embeddings for all species anchors from configs/anchors/*.yml
+    - 각 종별로 NPY/CSV 저장
+    - 전체 스택 2D 투영 CSV도 생성
+    """
     metas_all, mats = [], []
     for species, anchors in load_anchor_yamls():
         texts, rows = [], []
@@ -19,19 +24,24 @@ def build_all():
                 texts.append(a)
             else:
                 t = a.get("text") or a.get("phrase") or a.get("anchor") or ""
-                if not t: continue
-                rows.append({"name": a.get("name", f"anchor_{i:03d}"),
-                             "text": t, "meaning": a.get("meaning",""),
-                             "context": a.get("context",""), "species": species})
+                if not t:
+                    continue
+                rows.append({
+                    "name": a.get("name", f"anchor_{i:03d}"),
+                    "text": t,
+                    "meaning": a.get("meaning",""),
+                    "context": a.get("context",""),
+                    "species": species,
+                })
                 texts.append(t)
-        if not texts: 
+        if not texts:
             continue
         V = encode_text(texts)
         save_species_vectors(species, V, rows)
-        mats.append(V); metas_all += [{**r, "index": i} for i, r in enumerate(rows)]
+        metas_all.extend(rows)
+        mats.append(V)
     if not mats:
-        return [], None
-    X = np.vstack(mats)
-    Z = _svd2d(X)
-    write_global_2d(metas_all, Z)
-    return metas_all, X
+        return
+    X_all = np.vstack(mats).astype("float32")
+    Z2 = _svd2d(X_all)
+    write_global_2d(metas_all, Z2)
