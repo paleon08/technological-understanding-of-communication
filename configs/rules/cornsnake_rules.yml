@@ -1,0 +1,25 @@
+species: cornsnake
+
+# 자연어 규칙: "이 문구는 저 앵커(name)와 가깝게" — 앵커 name은 (기존 앵커 YAML의 이름과) 동일해야 함
+positive_pairs:
+  - { text: "Tail vibration as defensive warning",                 anchor: tail_vibration,            weight: 1.0 }
+  - { text: "Hissing is a warning deterrent",                      anchor: defensive_hiss,            weight: 1.0 }
+  - { text: "Flattening body to look larger when threatened",      anchor: body_flattening,           weight: 1.0 }
+  - { text: "S-coil pre-strike posture",                           anchor: s_coil_strike_pose,        weight: 1.0 }
+  - { text: "Fast bluff strike to scare threats",                  anchor: bluff_strike,              weight: 1.0 }
+  - { text: "Release of foul-smelling musk for chemical defense",  anchor: musking,                   weight: 1.0 }
+  - { text: "Freezing immobility for camouflage",                  anchor: freezing_immobility,       weight: 1.0 }
+  - { text: "Rapid fleeing to escape danger",                      anchor: rapid_fleeing,             weight: 1.0 }
+  - { text: "Following pheromone trails during breeding",          anchor: pheromone_trailing,        weight: 1.0 }
+  - { text: "Male combat to establish dominance",                  anchor: male_combat,               weight: 1.0 }
+  - { text: "Courtship tail quiver near female",                   anchor: courtship_tail_quiver,     weight: 1.0 }
+  - { text: "Calm tongue flicking for exploration",                anchor: calm_tongue_flicking,      weight: 1.0 }
+
+# 동일 계열은 살짝 더 가깝게(선택)
+tie_groups:
+  - [tail_vibration, defensive_hiss, body_flattening, s_coil_strike_pose, bluff_strike, musking, freezing_immobility]
+
+# 명확히 다른 계열은 살짝 멀게(선택): 방어/위협 vs 탐색/번식
+separate_groups:
+  - [[tail_vibration, defensive_hiss, body_flattening, s_coil_strike_pose, bluff_strike, musking, freezing_immobility],
+     [calm_tongue_flicking, pheromone_trailing, courtship_tail_quiver, male_combat, rapid_fleeing]]

@@ -4,18 +4,29 @@ import argparse
 from .model_build import build_all
 from .adjust import rebuild_with_adjust
 from .search import nearest_overall
+from .search import nearest_overall, nearest_from_vector
+import numpy as np, argparse
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("cmd", choices=["build","adjust","query","run"], help="""
-    build = 모델 생성(앵커→임베딩)
-    adjust = 종별 조정(규칙 적용 재빌드)
-    query = queries.txt 또는 --query로 검색
-    run   = build → adjust → query 순서로 원샷
-    """)
+    ap.add_argument("cmd", choices=["build","adjust","query","infer","run"], help="...")
     ap.add_argument("--k", type=int, default=5)
-    ap.add_argument("--query", type=str, default="")
+    ap.add_argument("--query", type=str, default=None)
+    ap.add_argument("--input", type=str, default=None)  # infer용
     args = ap.parse_args()
+
+    if args.cmd == "infer":
+        if not args.input:
+            raise SystemExit("--input 벡터(.npy) 경로가 필요합니다.")
+        vec = np.load(args.input)
+        if vec.ndim > 1:
+            vec = vec.reshape(-1)  # [D] 로 맞추기
+        out = nearest_from_vector(vec, k=args.k)
+        if out: print(f"[OK] wrote {out}")
+        return
+
+    # 기존 build/adjust/query/run 그대로...
+
 
     if args.cmd == "build":
         build_all()
