@@ -1,198 +1,68 @@
+# tuc/ingest.py
 from __future__ import annotations
+from pathlib import Path
 from dataclasses import dataclass
-from typing import Optional, List, Dict, Any, Union
-import os
+from typing import Optional, List, Dict, Any
+import os, json
 import numpy as np
-# tuc/audio_backend.py
-from __future__ import annotations
-import os
-import numpy as np
+import soundfile as sf
 
-class BaseAudioBackend:
-    name: str = "base"
-    def encode_wave(self, wav: np.ndarray, sr: int) -> np.ndarray:
-        """wav: float32 mono [-1,1], shape [T] → return: float32 [D] L2-normalized"""
-        raise NotImplementedError
-
-# 1) 기존 Wav2Vec2 경로(이미 프로젝트에 있다면 여기서 호출)
-class Wav2Vec2Backend(BaseAudioBackend):
-    name = "wav2vec2"
-    def __init__(self):
-        # 필요 시 여기서 기존 모듈 import (예: lib.ops.features.w2v2)
-        try:
-            from lib.ops.features import w2v2 as _w2v2  # 프로젝트 구조에 맞춰 조정
-            self._impl = _w2v2
-        except Exception as e:
-            self._impl = None
-            print("[Wav2Vec2Backend] fallback: impl not found:", e)
-
-    def encode_wave(self, wav: np.ndarray, sr: int) -> np.ndarray:
-        if self._impl is None:
-            # 아주 단순 폴백(안전망): 스펙트럼 파워 요약 (임시)
-            x = np.abs(np.fft.rfft(wav.astype(np.float32)))
-            x = x / (np.linalg.norm(x) + 1e-8)
-            return x.astype(np.float32)
-        # 프로젝트의 w2v2 추출 함수에 맞춰 호출 (아래는 예시 형태)
-        # vec = self._impl.embed_one(wav, sr)  # 예: [D]
-        # return (vec / (np.linalg.norm(vec) + 1e-8)).astype(np.float32)
-        # ↑ 위 함수명이 다르면 실제 프로젝트 함수명에 맞춰 수정
-        raise NotImplementedError("Wav2Vec2Backend: 프로젝트의 w2v2 임베딩 호출부를 연결하세요.")
-
-# 2) 외부 모델(Transformers) 공용 래퍼
-class HFExternalAudioBackend(BaseAudioBackend):
-    """
-    HuggingFace 오디오 모델 공용 래퍼
-    환경변수 TUC_AUDIO_MODEL 로 모델 ID 지정 (예: 'laion/clap-htsat-fused' 등)
-    - get_audio_features 가 있으면 그걸 사용
-    - 없으면 last_hidden_state 를 평균 풀링
-    """
-    name = "external"
-
-    def __init__(self, model_id: str | None = None, device: str | None = None):
-        import torch
-        from transformers import AutoProcessor, AutoModel
-
-        self.model_id = model_id or os.getenv("TUC_AUDIO_MODEL", "laion/clap-htsat-fused")
-        self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
-
-        # Processor/Model 로드
-        self.processor = AutoProcessor.from_pretrained(self.model_id)
-        self.model = AutoModel.from_pretrained(self.model_id).to(self.device).eval()
-
-        # 사용할 전방 함수 선택
-        self._use_get_audio_features = hasattr(self.model, "get_audio_features")
-
-    def encode_wave(self, wav: np.ndarray, sr: int) -> np.ndarray:
-        import torch
-        # mono 보장
-        if wav.ndim == 2:
-            wav = wav.mean(axis=1)
-        wav = wav.astype(np.float32)
-
-        # 일부 모델은 샘플레이트 고정(예: 32k, 48k)이 필요할 수 있음 → 필요 시 리샘플
-        # 여기선 processor가 내부에서 처리하거나, 안 되면 그대로 시도
-        inputs = self.processor(audios=wav, sampling_rate=sr, return_tensors="pt")
-        inputs = {k: v.to(self.device) for k, v in inputs.items()}
-
-        with torch.no_grad():
-            if self._use_get_audio_features:
-                feats = self.model.get_audio_features(**inputs)  # [1, D]
-            else:
-                out = self.model(**inputs)
-                if hasattr(out, "last_hidden_state"):
-                    feats = out.last_hidden_state.mean(dim=1)  # [1, D]
-                else:
-                    # 안전망: 모델에 따라 출력 키가 다를 수 있음
-                    # 가장 큰 텐서를 찾아 평균 풀링
-                    tensors = [v for v in out.__dict__.values() if hasattr(v, "dim")]
-                    if not tensors:
-                        raise RuntimeError("No tensor outputs from external audio model.")
-                    t = max(tensors, key=lambda x: x.numel())
-                    if t.dim() >= 2:
-                        feats = t.mean(dim=1)
-                    else:
-                        feats = t.unsqueeze(0)
-            feats = torch.nn.functional.normalize(feats, dim=-1)
-            return feats[0].detach().cpu().numpy().astype(np.float32)
-
-def get(name: str) -> BaseAudioBackend:
-    name = (name or "").lower()
-    if name in {"wav2vec2", "w2v2"}:
-        return Wav2Vec2Backend()
-    if name in {"naturelm", "external", "hf"}:
-        return HFExternalAudioBackend()
-    raise ValueError(f"Unknown audio backend: {name}")
-
-
-try:
-    import soundfile as sf  # 경량 오디오 로더
-except Exception:
-    sf = None
-
-try:
-    import cv2  # 선택: 비디오 프레임 샘플링
-except Exception:
-    cv2 = None
-
-ArrayLike = Union[List[float], np.ndarray]
-
-
-def _l2_normalize(x: np.ndarray, eps: float = 1e-12) -> np.ndarray:
-    n = np.linalg.norm(x) + eps
-    return x / n
-
+from tuc.audio_backend import get as get_audio_backend
 
 @dataclass
-class InputPayload:
-    """원시 입력 + 메타데이터 컨테이너"""
-    kind: str                         # 'text' | 'audio' | 'video' | 'sensor'
-    data: Any                         # 문자열/np.ndarray/파일경로
-    rate: Optional[int] = None        # 오디오/센서 샘플레이트
-    channels: Optional[int] = None
-    meta: Optional[Dict[str, Any]] = None
+class EmbedResult:
+    key: str
+    path: str
+    out_dir: str
+    meta: Dict[str, Any]
 
+def _save_vec(out_dir: Path, key: str, vec: np.ndarray, meta: dict):
+    out_dir.mkdir(parents=True, exist_ok=True)
+    np.save(out_dir / f"{key}.npy", vec.astype(np.float32))
+    with open(out_dir / f"{key}.json", "w", encoding="utf-8") as f:
+        json.dump(meta, f, ensure_ascii=False, indent=2)
 
-class Ingestor:
-    """다양한 입력을 feature(z)로 통일하는 레이어.
-    여기서는 가벼운 통계/샘플링만 수행하고, 의미 임베딩은 encoder가 담당.
+def embed_audio_file(path: str, out_dir: str,
+                     backend: str | None = None,
+                     model_id: str | None = None) -> EmbedResult:
     """
-
-    def from_text(self, text: str, meta: Optional[Dict[str, Any]] = None) -> InputPayload:
-        assert isinstance(text, str) and len(text.strip()) > 0, "빈 텍스트"
-        return InputPayload(kind='text', data=text.strip(), meta=meta or {})
-
-    def from_audio_file(self, path: str, target_rate: int = 16000) -> InputPayload:
-        assert os.path.isfile(path), f"오디오 파일 없음: {path}"
-        if sf is None:
-            raise RuntimeError("soundfile 미설치: pip install soundfile")
-        wav, sr = sf.read(path, dtype='float32', always_2d=True)
-        # 모노 변환
+    path: 입력 오디오 파일
+    out_dir: 저장 폴더
+    backend: None|'external'|'wav2vec2' (None이면 external)
+    model_id: 외부 모델 ID(옵션, 없으면 내부 기본값)
+    """
+    p = Path(path)
+    wav, sr = sf.read(p)
+    if wav.ndim == 2:
         wav = wav.mean(axis=1)
-        # 간단 리샘플(최근접; torchaudio 없을 때 임시)
-        if sr != target_rate:
-            ratio = target_rate / sr
-            idx = (np.arange(int(len(wav) * ratio)) / ratio).astype(np.int64)
-            idx = np.clip(idx, 0, len(wav) - 1)
-            wav = wav[idx]
-            sr = target_rate
-        return InputPayload(kind='audio', data=wav, rate=sr, channels=1, meta={'path': path})
+    wav = wav.astype(np.float32)
 
-    def from_video_file(self, path: str, fps: int = 2, max_frames: int = 32) -> InputPayload:
-        assert os.path.isfile(path), f"비디오 파일 없음: {path}"
-        if cv2 is None:
-            raise RuntimeError("opencv-python 미설치: pip install opencv-python")
-        cap = cv2.VideoCapture(path)
-        if not cap.isOpened():
-            raise RuntimeError(f"비디오 열기 실패: {path}")
-        input_fps = cap.get(cv2.CAP_PROP_FPS) or 30.0
-        step = max(int(round(input_fps / max(1, fps))), 1)
-        frames = []
-        i = 0
-        while True:
-            ok, frame = cap.read()
-            if not ok:
-                break
-            if i % step == 0:
-                # 224x224 중앙크롭 + 리사이즈(간단)
-                h, w = frame.shape[:2]
-                m = min(h, w)
-                y0 = (h - m) // 2
-                x0 = (w - m) // 2
-                crop = frame[y0:y0+m, x0:x0+m]
-                crop = cv2.resize(crop, (224, 224), interpolation=cv2.INTER_AREA)
-                crop = crop.astype(np.float32) / 255.0
-                frames.append(crop)
-                if len(frames) >= max_frames:
-                    break
-            i += 1
-        cap.release()
-        if len(frames) == 0:
-            raise RuntimeError("프레임 추출 실패")
-        arr = np.stack(frames, axis=0)  # [T, 224, 224, 3]
-        return InputPayload(kind='video', data=arr, meta={'path': path, 'stride': step})
+    be = get_audio_backend(backend, model_id=model_id)
+    vec = be.encode_wave(wav, int(sr))  # [D]
 
-    def from_sensor_array(self, x: ArrayLike, rate: Optional[int] = None, meta: Optional[Dict[str, Any]] = None) -> InputPayload:
-        arr = np.asarray(x, dtype=np.float32)
-        if arr.ndim == 1:
-            arr = arr[:, None]  # [N,1]
-        return InputPayload(kind='sensor', data=arr, rate=rate, meta=meta or {})
+    key = p.stem
+    meta = {
+        "path": str(p),
+        "backend": be.name,
+        "sr": int(sr),
+        "dim": int(vec.shape[-1]),
+        "model_id": getattr(be, "model_id", None),
+    }
+    _save_vec(Path(out_dir), key, vec, meta)
+    return EmbedResult(key=key, path=str(p), out_dir=str(out_dir), meta=meta)
+
+def embed_from_folder(in_root: str, out_root: str,
+                      backend: str | None = None,
+                      model_id: str | None = None,
+                      exts=(".wav",".mp3",".flac",".ogg",".m4a")) -> list[EmbedResult]:
+    in_root = Path(in_root)
+    out_root = Path(out_root)
+    files = [p for p in in_root.rglob("*") if p.suffix.lower() in exts]
+    results: list[EmbedResult] = []
+    for p in files:
+        try:
+            r = embed_audio_file(str(p), str(out_root), backend=backend, model_id=model_id)
+            results.append(r)
+        except Exception as e:
+            print("[ingest] fail:", p, e)
+    return results

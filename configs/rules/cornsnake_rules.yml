@@ -1,14 +1,13 @@
-﻿# configs/rules/cornsnake_rules.yml (fixed)
-species: cornsnake
+﻿species: cornsnake
 
 positive_pairs:
   - { text: "Tail vibration as defensive warning",                 anchor: tail_vibration,        weight: 1.0 }
   - { text: "Hissing is a warning deterrent",                      anchor: defensive_hiss,        weight: 1.0 }
   - { text: "Flattening body to look larger when threatened",      anchor: body_flattening,       weight: 1.0 }
-  - { text: "S-coil pre-strike posture",                           anchor: s_coil_pose,           weight: 1.0 }   # ??fix
+  - { text: "S-coil pre-strike posture",                           anchor: s_coil_pose,           weight: 1.0 }
   - { text: "Fast bluff strike to scare threats",                  anchor: bluff_strike,          weight: 1.0 }
   - { text: "Release of foul-smelling musk for chemical defense",  anchor: musking,               weight: 1.0 }
-  - { text: "Freezing immobility for camouflage",                  anchor: freezing,              weight: 1.0 }   # ??fix
+  - { text: "Freezing immobility for camouflage",                  anchor: freezing,              weight: 1.0 }
   - { text: "Rapid fleeing to escape danger",                      anchor: rapid_fleeing,         weight: 1.0 }
   - { text: "Following pheromone trails during breeding",          anchor: pheromone_trailing,    weight: 1.0 }
   - { text: "Male combat to establish dominance",                  anchor: male_combat,           weight: 1.0 }
@@ -16,45 +15,8 @@ positive_pairs:
   - { text: "Calm tongue flicking for exploration",                anchor: calm_tongue_flicking,  weight: 1.0 }
 
 tie_groups:
-  - [tail_vibration, defensive_hiss, body_flattening, s_coil_pose, bluff_strike, musking, freezing]   # ??fix
+  - [tail_vibration, defensive_hiss, body_flattening, s_coil_pose, bluff_strike, musking, freezing]
 
 separate_groups:
   - [[tail_vibration, defensive_hiss, body_flattening, s_coil_pose, bluff_strike, musking, freezing],
-     [calm_tongue_flicking, pheromone_trailing, courtship_tail_quiver, male_combat, rapid_fleeing]]   # ??fix
-
-# ?? configs/rules/crestedgecko_rules.yml
-schema_version: 1
-species: crestedgecko
-
-defaults:               # ?좏깮: ?꾩뿭 ?뚮씪誘명꽣
-  alpha: 0.15           # ?듭빱 ?좎궗??鍮꾩쨷
-  gamma: 0.05           # 洹쒖튃 議곗젙 鍮꾩쨷
-
-rules:
-  - name: distress_prefers_repeats
-    if:
-      - features.repeats: "2..5"
-      - meta.context: ["handled", "captured"]
-    then:
-      adjust:
-        bonus:
-          - target: "cre.distress_chirping"     # ?됰룞 ?듭빱
-            value: +0.30
-          - target: "meaning.alarm_high"        # **?섎? ?듭빱**
-            value: +0.30
-  - name: night_startle_bias
-    if:
-      - meta.time: ["night"]
-      - text.includes_any: ["single", "吏?, "?⑤컻"]
-    then:
-      adjust:
-        bonus:
-          - target: "cre.startle_chirp"
-            value: +0.20
-          - target: "meaning.alarm_low"
-            value: +0.20
-
-  - name: mutual_exclusion
-    then:
-      inhibit_pairs:
-        - ["cre.startle_chirp", "cre.distress_chirping"]
+     [calm_tongue_flicking, pheromone_trailing, courtship_tail_quiver, male_combat, rapid_fleeing]]

@@ -11,10 +11,8 @@ def _load_projection(path: str):
 def save_vector(q: np.ndarray, meta, out_dir: str) -> str:
     os.makedirs(out_dir, exist_ok=True)
     key = uuid.uuid4().hex[:8]
-    npy = os.path.join(out_dir, f"{key}.npy")
-    jso = os.path.join(out_dir, f"{key}.json")
-    np.save(npy, q.astype(np.float32))
-    with open(jso, 'w', encoding='utf-8') as f:
+    np.save(os.path.join(out_dir, f"{key}.npy"), q.astype(np.float32))
+    with open(os.path.join(out_dir, f"{key}.json"), "w", encoding="utf-8") as f:
         json.dump(meta, f, ensure_ascii=False, indent=2)
     return key
 
@@ -33,8 +31,8 @@ def main():
     ap_audio = sub.add_parser("audio")
     ap_audio.add_argument("--path", required=True)
     ap_audio.add_argument("--out", required=True)
-    ap_audio.add_argument("--backend", choices=["external","wav2vec2"], default="external")
-
+    ap_audio.add_argument("--backend", default=None, choices=[None,"external","wav2vec2"])
+    ap_audio.add_argument("--model-id", default=None)
     # video
     pv = sub.add_parser('video', help='비디오 파일 입력')
     pv.add_argument('--path', required=True)
@@ -59,10 +57,10 @@ def main():
         meta = {'kind': 'text', 'text': args.text}
 
     elif args.cmd == 'audio':
-        ingest.embed_audio_file(args.path, args.out, backend=args.backend)
-        payload = ing.from_audio_file(args.path, target_rate=args.rate)
-        q = pj.audio(payload)
-        meta = {'kind': 'audio', 'path': args.path, 'rate': payload.rate}
+        r = ingest.embed_audio_file(args.path, args.out,
+                                    backend=args.backend, model_id=args.model_id)
+        print("[cli_input.audio] saved:", r.key, r.meta)
+        return
 
     elif args.cmd == 'video':
         payload = ing.from_video_file(args.path)
