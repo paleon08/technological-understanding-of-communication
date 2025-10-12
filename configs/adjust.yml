@@ -71,6 +71,21 @@ species_adjust:
       - { name: tail_autotomy,        scale: 1.0 }
       - { name: fired_down_calm,      scale: 1.0 }
 
+  - species: dog
+    anchor_scales_behavior:
+      - { name: bark_alarm,   scale: 1.0 }
+      - { name: bark_playful, scale: 1.0 }
+    anchor_scales_meaning:
+      - { name: bark_alarm,   scale: 1.05 }
+      - { name: bark_playful, scale: 0.98 }
+    keyword_boosts_behavior:  # 형태 키워드
+      - { keyword: "rapid", scale: 1.03 }
+      - { keyword: "loud",  scale: 1.02 }
+    keyword_boosts_meaning:   # 기능/의미 키워드
+      - { keyword: "alarm",       scale: 1.05 }
+      - { keyword: "territorial", scale: 1.04 }
+      - { keyword: "play",        scale: 1.03 }
+
     keyword_boosts:
       - { keyword: defensive,   scale: 1.05 }
       - { keyword: defense,     scale: 1.05 }
