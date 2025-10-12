@@ -27,9 +27,17 @@ def embed_dir(in_dir: Path, out_dir: Path):
         pd.DataFrame(rows).to_csv(csv_fn, index=False)
         print(f"[done] {in_dir.name}: {len(embs)} -> {emb_fn}")
 
-if __name__ == "__main__":
+from tuc import ingest
+
+def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--in", dest="in_dir", required=True, help="input folder, e.g., data/crestedgecko_raw")
-    ap.add_argument("--out", dest="out_dir", required=True, help="output folder, e.g., artifacts/audio_embeds/crestedgecko")
+    ap.add_argument("--in", dest="in_root", required=True)
+    ap.add_argument("--out", dest="out_root", required=True)
+    ap.add_argument("--backend", choices=["external", "wav2vec2"], default="external",
+                    help="audio embedding backend")
     args = ap.parse_args()
-    embed_dir(Path(args.in_dir), Path(args.out_dir))
+
+    ingest.embed_from_folder(args.in_root, args.out_root, backend=args.backend)
+
+if __name__ == "__main__":
+    main()

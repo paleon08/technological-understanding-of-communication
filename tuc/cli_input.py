@@ -1,5 +1,6 @@
 import argparse, os, yaml, json, uuid
 import numpy as np
+from tuc import ingest
 
 def _load_projection(path: str):
     if not os.path.isfile(path):
@@ -29,9 +30,10 @@ def main():
     pt.add_argument('--text', required=True, type=str)
 
     # audio
-    pa = sub.add_parser('audio', help='오디오 파일 입력')
-    pa.add_argument('--path', required=True)
-    pa.add_argument('--rate', type=int, default=16000)
+    ap_audio = sub.add_parser("audio")
+    ap_audio.add_argument("--path", required=True)
+    ap_audio.add_argument("--out", required=True)
+    ap_audio.add_argument("--backend", choices=["external","wav2vec2"], default="external")
 
     # video
     pv = sub.add_parser('video', help='비디오 파일 입력')
@@ -57,6 +59,7 @@ def main():
         meta = {'kind': 'text', 'text': args.text}
 
     elif args.cmd == 'audio':
+        ingest.embed_audio_file(args.path, args.out, backend=args.backend)
         payload = ing.from_audio_file(args.path, target_rate=args.rate)
         q = pj.audio(payload)
         meta = {'kind': 'audio', 'path': args.path, 'rate': payload.rate}

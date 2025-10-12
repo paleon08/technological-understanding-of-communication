@@ -1,21 +1,55 @@
+# configs/rules/crestedgecko_rules.yml (fixed)
 species: crestedgecko
 
 positive_pairs:
-  - { text: "Slow tail waving as caution signal",                  anchor: tail_waving_slow,                weight: 1.0 }
-  - { text: "Rapid tail vibration indicates elevated warning",     anchor: tail_vibration_rapid,            weight: 1.0 }
-  - { text: "Scent rubbing as territorial marking",                anchor: territorial_marking_scent_rubbing, weight: 1.0 }
-  - { text: "Distress chirping as alarm call",                     anchor: distress_chirping,               weight: 1.0 }
-  - { text: "Barking call in territorial disputes",                anchor: barking_call,                    weight: 1.0 }
-  - { text: "Head shaking indicates refusal",                      anchor: head_shaking_refusal,            weight: 1.0 }
-  - { text: "Open-mouth threat display",                           anchor: open_mouth_threat,               weight: 1.0 }
-  - { text: "Mating bite during copulation",                       anchor: mating_bite,                     weight: 1.0 }
-  - { text: "Escape jump to quickly leave danger",                 anchor: escape_jump,                     weight: 1.0 }
-  - { text: "Tail autotomy as last-resort defense",                anchor: tail_autotomy,                   weight: 1.0 }
-  - { text: "Fired-down calm with muted coloration",               anchor: fired_down_calm,                 weight: 1.0 }
+  - { text: "Slow tail waving as caution signal",                  anchor: tail_waving_slow,      weight: 1.0 }
+  - { text: "Rapid tail vibration indicates elevated warning",     anchor: tail_vibration_rapid,  weight: 1.0 }
+  - { text: "Scent rubbing as territorial marking",                anchor: territorial_marking,   weight: 1.0 }              # ← fix
+  - { text: "Distress chirping as alarm call",                     anchor: distress_chirping,     weight: 1.0 }
+  - { text: "Barking call in territorial disputes",                anchor: barking_call,          weight: 1.0 }
+  - { text: "Head shaking indicates refusal",                      anchor: head_shaking,          weight: 1.0 }              # ← fix
+  - { text: "Open-mouth threat display",                           anchor: open_mouth_threat,     weight: 1.0 }
+  - { text: "Mating bite during copulation",                       anchor: mating_bite,           weight: 1.0 }
+  - { text: "Escape jump to quickly leave danger",                 anchor: escape_jump,           weight: 1.0 }
+  - { text: "Tail autotomy as last-resort defense",                anchor: tail_autotomy,         weight: 1.0 }
+  - { text: "Fired-down calm with muted coloration",               anchor: fired_down_calm,       weight: 1.0 }
+  - { text: "Startle chirp as brief alarm",                        anchor: startle_chirp,         weight: 1.0 }              # ← add
+  - { text: "Neutral roaming / investigation",                     anchor: exploration,           weight: 1.0 }              # ← add
 
 tie_groups:
-  - [tail_waving_slow, tail_vibration_rapid, open_mouth_threat, distress_chirping, barking_call, tail_autotomy]
+  - [tail_waving_slow, tail_vibration_rapid, open_mouth_threat, distress_chirping, barking_call, tail_autotomy, startle_chirp]
 
 separate_groups:
-  - [[tail_waving_slow, tail_vibration_rapid, open_mouth_threat, distress_chirping, barking_call, tail_autotomy],
-     [fired_down_calm]]
+  - [[tail_waving_slow, tail_vibration_rapid, open_mouth_threat, distress_chirping, barking_call, tail_autotomy, startle_chirp],
+     [fired_down_calm, exploration, freeze]]
+  - [[territorial_marking], [fired_down_calm, exploration]]   # 영토 표식 ↔ 비위협/탐색 분리
+
+schema_version: 1              # ← v1 확장 규칙
+species: crestedgecko          # 또는 cornsnake / common
+includes:                      # (선택) 다른 yml을 불러와 병합
+  - configs/rules/common_rules.yml
+
+defaults:                      # (선택) 전역 하이퍼파라미터
+  alpha: 0.15                  # 앵커 유사도 비중
+  gamma: 0.05                  # 규칙 보정 비중
+
+positive_pairs:                # (선택) v0와 동일, 하위호환
+  - { text: "...", anchor: some_anchor, weight: 1.0 }
+tie_groups:                    # (선택) 동점/동행동 묶음
+  - [a1, a2, a3]
+separate_groups:               # (선택) 서로 떨어뜨릴 군집
+  - [[threat_...],[calm_...]]
+
+rules:                         # ← v1 확장의 핵심
+  - name: <고유이름>
+    if:                        # 모두 AND 결합
+      - text.includes_any: ["단발", "single", "짧"]
+      - meta.time: ["night"]
+      - features.repeats: "1"          # 정수 또는 범위/부등식
+    then:
+      adjust:
+        bonus:
+          - { target: "cre.startle_chirp", value: +0.20 }
+          - { target: "meaning.alarm_low", value: +0.20 }  # 의미 앵커
+      inhibit_pairs:
+        - ["cre.startle_chirp", "cre.distress_chirping"]
