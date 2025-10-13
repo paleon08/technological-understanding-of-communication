@@ -17,7 +17,7 @@ def _load():
         _mdl = AutoModel.from_pretrained(_DEFAULT_TEXT).to(_dev).eval()
         print(f"[tuc.encoder] text-model={_DEFAULT_TEXT} device={_dev}")
     except Exception as e:
-        if __REQUIRE_TEXT:
+        if _REQUIRE_TEXT:
             raise RuntimeError(f"Text model required but failed: {e}")
         raise
 

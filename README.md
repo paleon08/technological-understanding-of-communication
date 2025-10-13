@@ -1,421 +1,494 @@
-클랩 모델 로드 완료
+좋아, **추론이 끼어들 틈이 없도록** 프로젝트의 아이디어→설계→입출력(I/O) 흐름을 **완전 명세** 수준으로 정리했어.
+(아래는 “텍스트 캐논(기준 공간)”을 전제로 한 v0 설계이며, *선택적* 변형 경로까지 명확히 분리해 뒀어.)
 
 ---
 
-## 🎯 현재 목표 기반: “언어 지도 조정용 최소 절차”
+# 0. 프로젝트 목적(고정 진술)
 
-### 핵심 개념
-
-* **CLAP의 자연어 의미 공간만 사용**
-* 오디오 신호 → 임베딩 변환은 나중에 (또는 생략)
-* 현재 단계에서는 **텍스트 앵커 + 모델 내부 의미 좌표만으로** 종별 의미 지도 구축
+* **목표 A — 저데이터 종 지원:** 데이터가 부족한 종에서도 행동의 **의미**를 알려줄 수 있어야 한다.
+* **목표 B — 인간–동물 소통 강화:** 사람이 이해할 수 있는 **자연어 설명**으로 결과를 제공해야 한다.
+* **핵심 전략:** 데이터가 많은 종에서 만든 **공통 “의미 지도”(텍스트 임베딩 공간의 앵커들)**를 기준(캐논)으로 고정하고, 데이터가 적은 종은 **자연어 규칙**으로 그 지도에 정합화한다.
 
 ---
 
-## 🧩 간소화된 전체 절차 (불필요 단계 제거판)
+# 1. 개념 설계(아이디어 흐름 → 설계로 고정)
 
-```
-(1) 앵커 작성 ─→ (2) 텍스트 임베딩 생성 ─→ (3) 의미 매칭 및 시각화 ─→ (4) 조정 및 지식 기반 확장
-```
+## 1.1 캐논(기준 공간)
+
+* **정의:** 하나의 **텍스트 임베딩 공간** (단일 텍스트 인코더로 생성, L2 정규화).
+* **이유:** 종/기기/환경에 따른 음향적 변이를 배제하고, 의미(semantics)를 직접 비교하기 위함.
+
+## 1.2 앵커(Anchors)
+
+* **행동 앵커(behavior anchors):** 표층 행동의 프로토타입(예: `startle_chirp`, `s_coil_pose`).
+* **의미 앵커(meaning anchors, 권장):** 내재 의미의 프로토타입(예: `meaning.alarm_low`, `meaning.exploration`).
+* **표현:** 짧은 자연어 설명 → **같은 텍스트 인코더**로 임베딩 → L2 정규화한 벡터를 “랜드마크”로 고정.
+
+## 1.3 자연어 규칙(NL Rules, v0)
+
+* **역할:** 관측 텍스트/메타/간단 특징을 읽어 **문맥 보정 Δ**을 부여(학습 없이 약지도).
+* **표현력(스키마 v0):**
+
+  * `positive_pairs` : 핵심 표현 ↔ 앵커 가중치
+  * `tie_groups` : 동류 묶음
+  * `separate_groups` : 혼동 군집 강제 분리
+    *(v1로 가면 if/then 조건과 의미 앵커 가중을 정식 지원하지만, v0에선 규칙을 “유사도 보정”으로만 해석)*
+
+## 1.4 결합/판정(학습 없음)
+
+* **유사도:** 관측 임베딩 `x`와 각 앵커 `a_k`의 코사인 유사도 `sim_k`
+* **보정:** 규칙 보정치 `Δ_k` (없으면 0)
+* **최종 점수:**
+  [
+  \textstyle score_k ;=; \alpha \cdot sim_k ;+; \gamma \cdot \Delta_k
+  ]
+* **제약:** `tie` / `separate` (필요 시 `inhibit`) 적용
+* **거부:** `max_k score_k < \tau` → **abstain(보류)**
 
 ---
 
-### 🧠 **1️⃣ 앵커 설계 (Anchor Definition)**
+# 2. I/O 흐름(완전 명세; 선택지 포함, 우선순위 명시)
 
-**목적:**
-각 종의 대표적 행동 + 그 의미를 텍스트 문장으로 정의.
-이게 사실상 “해석 기준점(semantic pivot)” 역할을 함.
+아래 **A 경로**가 “권장/기본(캐논=텍스트)”이며, **B·C**는 선택적 변형이다.
 
-**파일:**
-`configs/anchors/{species}.yml`
+> ⚠️ 어떤 경로를 쓰든 **앵커와 입력은 같은 텍스트 인코더**로 만든 벡터와 **동일 공간**에서 비교되어야 한다.
 
-**예시:**
+## A. 권장 경로(텍스트 전용 캐논) — **기본값**
+
+**목적:** 모든 입력을 텍스트로 통일, 캐논 공간에서만 연산.
+
+1. **입력 수집(Input)**
+
+   * 원자료: 오디오/비디오/연구노트
+   * 처리: 사람이 읽는 문장 1–2개로 **간결 텍스트 설명** 작성
+
+     * 예) “야간, 짧은 단발 찍—소리 1회, 핸들링 없음, 회피 없음”
+   * 함께 수집: `meta`(시간/상황/종), `features`(반복수 등 소수 피처)
+
+2. **표준 관측 레코드(Observation JSONL)**
+
+   * **스키마(필수/선택 포함)**
+
+     ```json
+     {
+       "id": "string, unique",
+       "species": "crestedgecko|cornsnake|unknown",     // 필수
+       "text": "string, <= 280 chars",                   // 필수: 간결 설명문
+       "meta": {                                         // 선택(권장)
+         "time": "day|night|dawn|dusk",
+         "context": "free_roam|handled|captured|unknown",
+         "locale": "ko|en|... (언어태그)"
+       },
+       "features": {                                     // 선택
+         "repeats": "int >=0",
+         "duration_s": "float >=0",
+         "intensity": "low|mid|high (선택)"
+       }
+     }
+     ```
+
+     * **제약:** `text`는 관측 사실만(판단/의미 단어 금지: “위협/경계” 등은 쓰지 않음).
+
+3. **임베딩(Embedding)**
+
+   * **인코더:** 단일 텍스트 인코더(다국어 지원 권장).
+   * **출력:** `x ∈ R^d` (L2 정규화).
+   * **동일 인코더로** 모든 앵커도 사전 임베딩되어 있음.
+
+4. **스코어링(유사도 계산)**
+
+   * 각 앵커 `a_k`에 대해 `sim_k = cos(x, a_k)`.
+
+5. **규칙 평가 → 보정치(Δ) 산출**
+
+   * `positive_pairs`: 텍스트 일부/표현 히트 시 해당 앵커에 +w.
+   * `tie_groups`: 동류 앵커 묶음 처리.
+   * `separate_groups`: 군집 분리(가까워도 경계 유지).
+   * **해석:** v0에서는 모든 규칙 효과를 **Δ**로 환산(숫자 보정치).
+
+6. **점수 결합 & 제약 적용**
+
+   * `score_k = α·sim_k + γ·Δ_k`
+   * `tie/separate` 반영, 필요 시 `inhibit`(상호배타)로 동시 후보 차단.
+
+7. **의사결정(Decision)**
+
+   * `s* = max_k score_k`
+   * **보류 조건:** `s* < τ`이면 `label="abstain"`
+   * **그 외:** Top-1 행동 라벨 반환, **의미 요약**(있다면 의미 앵커 Top-k 병기)
+
+8. **출력 계약(Output JSON)**
+
+   ```json
+   {
+     "id": "cre_0001",
+     "species": "crestedgecko",
+     "label": "startle_chirp" ,                // or "abstain"
+     "topk": [
+       {"anchor":"startle_chirp","score":0.67},
+       {"anchor":"distress_chirping","score":0.48},
+       {"anchor":"open_mouth_threat","score":0.41}
+     ],
+     "meaning_topk": [                         // 의미 앵커를 쓰는 경우
+       {"anchor":"meaning.alarm_low","score":0.58},
+       {"anchor":"meaning.exploration","score":0.22}
+     ],
+     "confidence": 0.67,
+     "reason_log": {
+       "sim_top": ["startle_chirp:0.52","distress_chirping:0.44"],
+       "rule_hits": ["night_single_prefers_startle"],
+       "delta": {"startle_chirp": +0.20}
+     },
+     "version": {"encoder":"<name>@sha", "ruleset":"crestedgecko@v0.3"}
+   }
+   ```
+
+   * **설명 가능성:** 어떤 규칙이 얼마 보정했는지 `reason_log`에 남김.
+
+> ✅ 이 경로가 **가장 안전/직관적**이며, 종 간 확장에 **추가 학습 없이** 바로 쓸 수 있음.
+
+---
+
+## B. 텍스트 요약 경로(오디오를 받되 캐논은 텍스트) — **허용/보조**
+
+**목적:** 오디오가 들어오면 **사람 혹은 규칙 기반 추출기로 텍스트 요약**을 먼저 만들고, 이후 A와 동일 처리.
+
+* **1’ 오디오 입력:** `.wav/.mp3` 등
+* **2’ 특징 추출(선택):** 반복수/지속시간/버스트 여부 같은 **간단 수치**만 뽑음
+* **3’ 요약 생성:**
+
+  * 자동: 규칙 기반 디스크립터 → 템플릿 문장 생성
+  * 수동: 관찰자가 문장 작성
+* **4’ 이후:** A의 3)~8) 단계 그대로
+
+> ⚠️ 오디오는 **입력 신호**일 뿐, **의미 앵커가 아님**. 임베딩 비교는 **언제나 텍스트 공간**에서만.
+
+---
+
+## C. 공유공간 경로(오디오–텍스트 멀티모달) — **추후 확장(주의)**
+
+**목적:** CLAP 류의 **공유 임베딩**을 쓸 때, 그래도 **텍스트 타워를 캐논**으로 유지.
+
+* **앵커 임베딩:** **텍스트 타워**로만 계산(기준 고정).
+* **오디오 투사:** 오디오 타워로 같은 공간에 투사하되, **정규화/온도 보정** 필수.
+* **정합화(있으면):** 소수의 검증 쌍으로 선형 정렬(프로크루스/릿지) 1층만 허용.
+
+> ❌ 텍스트 앵커 없이 **오디오 프로토타입**만 쓰거나, 다른 텍스트 인코더를 섞는 것은 금지(공간 불일치).
+
+---
+
+# 3. 파일·스키마 명세(추론 여지 제거)
+
+## 3.1 앵커 파일(YAML)
 
 ```yaml
-name: crestedgecko
 anchors:
-  - "tail wave for defense warning"
-  - "slow head tilt as curiosity behavior"
-  - "rapid limb vibration for stress signal"
+  - name: startle_chirp
+    prompt: "brief high-pitched single chirp; sudden flinch"
+  - name: distress_chirping
+    prompt: "2-5 short chirps; avoidance posture"
+  # (권장) 공통 의미 앵커
+  - name: meaning.alarm_low
+    prompt: "low-level alert; brief startle; quick recovery"
+```
+
+* **생성 규칙:** 모든 `prompt`는 같은 인코더로 임베딩 → L2 정규화 벡터 캐시.
+
+## 3.2 규칙 파일(v0, YAML)
+
+```yaml
+species: crestedgecko
+
+positive_pairs:
+  - { text: "single short chirp",           anchor: startle_chirp,       weight: 1.0 }
+  - { text: "2-5 short chirps",             anchor: distress_chirping,   weight: 1.0 }
+
+tie_groups:
+  - [tail_waving_slow, tail_vibration_rapid]
+
+separate_groups:
+  - [[startle_chirp, distress_chirping, open_mouth_threat],
+     [fired_down_calm, exploration]]
+```
+
+* **허용 단어:** 관측 **표층**(짧다/단발/반복수/포즈 등)만. **의미 단어(“위협/경계”)는 금지**.
+
+---
+
+# 4. 엔진 결합 규격(수식·하이퍼파라미터)
+
+* **코사인 유사도:** `sim_k ∈ [-1, 1]` (L2 정규화로 안정화)
+* **규칙 보정치 Δ:** `Δ_k`의 기본 범위 권장 `[-0.3, +0.3]`
+* **결합:** `score_k = α·sim_k + γ·Δ_k`
+
+  * **초기값:** `α = 0.15`, `γ = 0.05` (종/도메인별 검증으로 조정)
+* **임계값:** `τ ∈ [0.40, 0.70]` (검증셋 F1로 선택)
+* **캘리브레이션(권장):** 온도 1개(`T`)로 `score → prob` 보정(플랫).
+
+---
+
+# 5. 종 간 전이(저데이터 종의 절차)
+
+1. **공통 유지:** 텍스트 캐논/인코더, **의미 앵커**(이름·벡터) 변경 금지
+2. **최소 보강:** 행동 앵커 2–5개만 추가(진짜 필요한 것)
+3. **규칙 작성:** 관측 표현 차이를 **positive_pairs + separate**로 반영
+4. **게이트:** `species` 필드로 해당 종 규칙만 활성
+5. **검증:** Anchors-only / Rules-only / Both 성능 및 **보류율** 함께 확인
+
+---
+
+# 6. 출력·설명 가능성(Reason Log 포맷)
+
+```json
+{
+  "input": {"id":"cre_001","text":"야간 단발 짧은 소리 1회", "meta":{"time":"night"}, "features":{"repeats":1}},
+  "top1": "startle_chirp",
+  "topk": ["startle_chirp:0.67","distress_chirping:0.48","open_mouth_threat:0.41"],
+  "sim":  ["startle_chirp:0.52","distress_chirping:0.44"],
+  "delta": {"startle_chirp": +0.20},
+  "rules_hit": ["night_single_prefers_startle"],
+  "abstain": false
+}
+```
+
+* **목적:** 라벨 근거를 사람이 바로 확인(디버깅/보고서).
+
+---
+
+# 7. 평가 루틴(고정 절차)
+
+* **아블레이션 3종:** Anchors-only(γ=0) / Rules-only(α=0) / Both
+* **스윕:** `α×γ` 격자, `τ` 그리드 → **최적 조합** 선정
+* **지표:** Top-1/Top-3, 혼동행렬, **보류율–정확도 트레이드오프**
+* **황금 I/O 세트(6–8개):** 종별 대표 상황 텍스트 ↔ 기대 라벨 고정 → 드리프트 감시
+
+---
+
+# 8. 흔한 실패와 방지(규칙)
+
+* **오디오를 의미로 사용(금지):** 오디오는 **입력 신호**일 뿐, **의미는 텍스트 캐논에서만**.
+* **공간 혼용(금지):** 서로 다른 텍스트 인코더/멀티모달 공간을 **혼합 금지**.
+* **표층·의미 혼선:** 규칙·입력 텍스트에 **의미 단어 금지**(표층만 기입).
+* **강제 라벨링:** `τ` 미만은 **항상 보류**(unknown/검토) — 신뢰성 핵심.
+
+---
+
+# 9. 이 문서로부터의 실행 요약(한 페이지 치트)
+
+* **입력:** “관측 텍스트 + meta + features” JSONL
+* **앵커:** 텍스트 프롬프트 임베딩(행동 + (권장) 의미)
+* **규칙:** v0 스키마로 동의어/분리/묶음
+* **점수:** `α·sim + γ·Δ`, `τ`로 보류
+* **출력:** 행동 라벨 + (선택) 의미 요약 + reason_log
+* **평가:** 아블레이션/스윕/황금 I/O
+
+---
+
+## “I/O 흐름이 맞는지”에 대한 결론
+
+* 네가 원하는 “**데이터 많은 종의 의미 지도 → 다른 종 전이**”를 정확히 수행하려면 **A 경로(텍스트 캐논)**가 **정답**이야.
+* 오디오를 받아도 **B 경로**처럼 **텍스트 요약을 생성**해 **같은 텍스트 공간**으로 올리면 **전이 논리**가 깨지지 않는다.
+* C 경로(공유공간)는 *가능*하지만, 캐논을 **텍스트 타워**로 강제하고 정합화까지 해야 하므로 **추후 확장**으로 미루는 게 안전.
+
+---
+
+## 프로젝트 흐름
+* ① 캐논 제작 (Canon: 의미 지도 고정)
+
+목표
+
+종과 상관없이 공유되는 의미 좌표계를 텍스트 임베딩 공간에 고정한다.
+
+절차
+
+인코더 하나 고정
+
+단일 텍스트 인코더(다국어 권장) 선택 → 전 구간 동일 인코더 사용.
+
+임베딩은 L2 정규화.
+
+의미 앵커 세트 설계 (공통)
+
+예: meaning.alarm_low, meaning.alarm_high, meaning.exploration, meaning.courtship …
+
+각 앵커에 짧은 설명문(prompt) 작성 → 인코더로 임베딩 → 벡터 Freeze.
+
+데이터 많은 종의 행동 앵커(선택, 보조)
+
+예: startle_chirp, distress_chirping, s_coil_pose …
+
+역시 텍스트 설명 → 임베딩 → Freeze.
+
+온도 보정(권장)
+
+검증 소수 샘플로 온도 T 1개 추정(과신 방지).
+
+캐논 버전 태그: encoder@sha, anchors@vX.
+
+산출물
+
+configs/anchors/common_meanings.yml (의미 앵커)
+
+(선택) configs/anchors/<species>.yml (행동 앵커)
+
+artifacts/anchors/*.npy (캐시)
+
+docs/CANON.md (의미 축 정의·네이밍 규칙)
+
+체크리스트
+
+ 인코더 하나만 사용(앵커/입력 동일)
+
+ 의미 앵커 최소 4–6개 정의
+
+ 모든 앵커 벡터 L2 정규화 완료
+
+ 온도 T 추정(선택)
+
+② 모델 종별 조정 (저데이터 종 전이)
+
+목표
+
+캐논(공통 의미 앵커)은 그대로, 종별 차이는 **행동 앵커 소수 + 자연어 규칙(v0)**만으로 흡수.
+
+절차
+
+행동 앵커 보강(필요 시만)
+
+진짜 필요한 2–5개만 추가(불필요 확장 금지).
+
+자연어 규칙 작성(v0)
+
+positive_pairs: 관측 표현 ↔ 해당 앵커 매핑(핵심 키워드만).
+
+separate_groups: 위협 vs 탐색/차분 등 강제 분리.
+
+tie_groups: 동류 묶음(동률 처리).
+
+규칙 문구는 “표층 사실”만—의미 단어(위협/경계 등) 금지.
+
+종 게이트
+
+관측의 species에 따라 해당 종 규칙만 활성.
+
+점수 결합 고정
+
+score_k = α·sim_k + γ·Δ_k (초기값 α=0.15, γ=0.05)
+
+제약 적용: tie/separate(필요 시 inhibit)
+
+보류 정책(오픈셋)
+
+max(score) < τ → abstain (초기 τ≈0.5 근방에서 검증으로 튜닝).
+
+산출물
+
+configs/rules/<species>_rules.yml (v0 스키마)
+
+docs/SPECIES_ADAPT.md (종별 차이와 규칙 의도 요약)
+
+체크리스트
+
+ 규칙에 적힌 앵커명이 실제 앵커와 1:1 일치
+
+ 혼동 페어는 separate_groups로 분리
+
+ 종 게이트 적용 확인
+
+ α, γ, τ 초기값 기록
+ 좋아. **프로그램 안 돌리고 수동으로** 검증할 때 쓰는 최소·충분 세트로 정리해줄게. 그대로 따라 하면 돼.
+
+# 수동 검증 프로토콜 (프로그램 불필요)
+
+## 1) 준비물
+
+* **의도 의미(ground truth)**: 각 영상이 유도로 만들고자 한 의미(예: `alarm_low`, `alarm_high`, `exploration`).
+* **의미 앵커 목록**(짧은 정의 한 줄씩).
+* (선택) **행동→의미 매핑표**: 특정 행동이 어느 의미에 해당하는지 표 1장.
+
+예시 매핑(필요 시 조정):
+
+```
+startle_chirp → alarm_low
+distress_chirping → alarm_high
+s_coil_pose → alarm_high
+calm_tongue_flicking → exploration
+exploration → exploration
 ```
 
 ---
 
-### 🧮 **2️⃣ 텍스트 임베딩 생성 (Text Embedding via CLAP)**
+## 2) 클립 단위 절차 (5단계)
 
-**목적:**
-CLAP 모델의 **언어 임베딩 공간**에서 각 앵커 문장을 벡터로 변환.
-→ `artifacts/text_anchors/{species}.npy` 로 저장.
+1. **시청**: 영상 전체 1–2회.
+2. **표층 설명 기록**: 보이는/들리는 사실만 1~2문장. (의미 단어 금지: “위협/경계/구애” 등 X)
+3. **주 행동 결정**: 한 문장으로 핵심 행동 이름(또는 없음/복수).
+4. **의미 판정**:
 
-**명령어:**
+   * 주 행동이 매핑표상 **의도 의미와 같으면 → “일치(meaning)”**
+   * 주 행동이 다르지만 **같은 의미로 귀결**되면 → “의미 일치, 행동 불일치(OK)”
+   * 행동이 불분명/혼재 → **“보류”**
+   * 명백히 다른 의미 → **“불일치”**
+5. **신뢰도 메모(1–3점)**: 1=애매, 2=보통, 3=명확.
 
-```bash
-python lib/scripts/embed_text_anchors.py
-```
-
-이 단계는 **“모델의 언어 의미 좌표계 확보”**를 의미.
-이후 이 좌표계가 “언어 지도”의 뼈대가 된다.
+> 기준: 우리는 **“의미 일치 여부”**가 1순위이고, “행동 라벨 일치”는 보조지표야.
 
 ---
 
-### 🔗 **3️⃣ 의미 매칭 및 시각화 (Semantic Mapping & Visualization)**
+## 3) 기록 양식 (복붙해서 쓰는 카드)
 
-**목적:**
-동일한 공간에 인간 언어(설명/논문/지식 기반 문장)를 투영하여
-**행동 ↔ 의미 간의 위치 관계를 관찰/분류**한다.
-
-**예시 흐름:**
+아래 블록을 영상마다 하나씩 채워 넣어. (의미 단어는 `의도 의미`/`판정` 칸에만 쓰기)
 
 ```
-anchor_embeddings.npy
-        ↓
-LLM 또는 텍스트 입력(예: "stress response", "defensive vibration")
-        ↓
-코사인 유사도 계산 (Top-K)
-        ↓
-언어 지도(UMAP, t-SNE 등)로 시각화
-```
+[CLIP REVIEW]
+ID: 
+종(species):
+의도 의미(GT meaning):  alarm_low | alarm_high | exploration | courtship | other
 
-> 오디오 없음.
-> 대신 “텍스트 기반 의미 지도(Textual Semantic Map)”로 종별 구분·근접도 분석 가능.
+표층 설명(관측 텍스트, 의미 단어 금지):
+- 예) 야간, 짧은 단발 '찍' 1회, 핸들링 없음, 회피 없음
 
----
+주 행동(텍스트 한 줄 또는 목록):
+- 예) startle_chirp
 
-### 🧭 **4️⃣ 조정 및 지식 기반 확장 (Knowledge-Guided Adjustment)**
+판정:
+- 의미 일치 / 보류 / 불일치
+- (선택) 행동 라벨 일치 여부: 일치 / 불일치 / N/A
 
-**목적:**
-앵커와 문헌 기반 지식(논문·사육 관찰 기록 등)을 연결해
-**의미 벡터의 위치를 보정하거나 그룹화**.
-
-**방법:**
-
-* CLAP의 의미 벡터에 LLM을 통해 설명 문장 추가 → 확장된 앵커 세트 생성
-* 동일 행동을 여러 문장으로 표현해 “언어적 다양성” 확보
-* 의미 군집화로 종별 행동 패턴 차이 관찰
-
----
-
-## 🚀 **이 방식의 장점**
-
-| 항목       | CLAP 오디오 방식    | 현재(언어 지도 중심) 방식    |
-| -------- | -------------- | ------------------ |
-| 데이터 요구량  | 매우 높음          | 거의 없음              |
-| 필요 자원    | 오디오, FFT 등 전처리 | 텍스트 기반             |
-| 실험 속도    | 느림             | 매우 빠름              |
-| 조정 난이도   | 높음             | 낮음                 |
-| 주 목적 부합도 | 중간             | 매우 높음 (언어지도 중심 연구) |
-
----
-
-## 📄 README에 들어갈 절차 요약 (최종본)
-
-```markdown
-## 🧭 Project Process Overview (Text-based Semantic Mapping)
-
-1️⃣ **Anchor Definition**
-   - 각 종의 행동 및 의미를 텍스트 문장(YAML)으로 정의.
-   - 예: "rapid tail vibration as defense signal"
-
-2️⃣ **Text Embedding (CLAP Language Space)**
-   - CLAP의 언어 모듈을 사용해 각 앵커를 임베딩.
-   - 결과: `artifacts/text_anchors/{species}.npy / .csv`
-
-3️⃣ **Semantic Matching & Visualization**
-   - 새로운 텍스트 입력(논문, 관찰 설명 등)을 같은 공간에 투영.
-   - 코사인 유사도로 근접 앵커 탐색 및 UMAP 시각화.
-
-4️⃣ **Knowledge-based Adjustment**
-   - 관찰/논문 정보를 LLM이 해석 → 의미 기반 조정 및 확장.
-   - 종별 행동 의미 지도 업데이트.
-
-> ⚙️ 오디오 신호 단계는 제외됨.  
-> 본 실험은 **CLAP의 언어 의미 공간을 직접 활용하는 텍스트 중심 의사소통 모델링**임.
+신뢰도(1~3):
+메모(이상/의문점):
 ```
 
 ---
 
-1) 최상위 개요
+## 4) 집계(손계산 공식)
 
-tuc/ — 파이프라인 핵심 모듈들(모델 빌드, 조정, 검색, 입출력, 인코더 등) [CORE]
+* 총 클립 수 `N`, 보류 수 `B`, 평가 대상 `E = N - B`
+* **의미 일치율** `= (의미 일치 건수) / E`
+* **행동 일치율(보조)** `= (행동 일치 건수) / E`
+* **커버리지(coverage)** `= E / N`  (높을수록 보류가 적음)
 
-lib/ — 스크립트 모음 및 입력 임베딩 예제(예: Wav2Vec2) [SCRIPT]/[ADAPTER]
+권장 합격선(예시, 상황 따라 조정):
 
-configs/ — 앵커 정의, 조정 규칙, 자연어 규칙, (선택) 페어링 정의 [CFG]
+* 의미 일치율 ≥ **90%** @ 커버리지 ≥ **80%**
+* 행동 일치율은 보조로 참고
 
-artifacts/ — 빌드/조정 후 산출물(임베딩, 리포트, 최근접 결과 등) [ARTIFACT]
+---
 
-src/ — 과거 래퍼/샘플(현행과 중복됨) [LEGACY]
+## 5) 판정 가이드(일관성 확보용)
 
-_archive_not_used/ — 보류/미사용 코드 [LEGACY]
+* **보류로 보내라:** 초점 밖/가림/잡음·중첩, “주 행동”을 명확히 못 적겠을 때.
+* **의미 일치로 인정:** 행동은 다르지만 같은 의미 축(예: `open-mouth threat` vs `defensive_hiss` 둘 다 `alarm_high`).
+* **불일치:** 주 행동이 명확하고, 매핑표상 다른 의미일 때.
 
-data/ — (선택) 정렬(Alignment)용 페어 CSV 등 학습 보조 데이터 [CFG/RAW]
+---
 
-2) tuc/ — 핵심 모듈
-tuc/cli.py [CLI]
+## 6) 흔한 함정 & 예방
 
-리포의 메인 엔트리. 서브커맨드:
+* **라벨 누설 금지:** 표층 설명에 “위협/경계/구애” 같은 의미 단어 쓰지 말기.
+* **다중 행동:** 한 클립에 둘 이상이면 **주 행동 1개**만 고르거나 클립을 분할.
+* **종 표기 오류:** 종이 틀리면 해석 자체가 흔들림 → 카드 상단에 종을 반드시 기입.
 
-build : 앵커 YAML → CLAP 텍스트 임베딩 생성
+---
 
-adjust: configs/adjust.yml 규칙 적용(전역/종별) 후 재정규화
-
-query : 자연어 질의(문장) → Top-K 앵커 검색
-
-run : build → adjust → query 순차 실행
-
-(제안) infer : **실제 입력 벡터(.npy)**로 Top-K (아래 “PLANNED” 참조)
-
-tuc/model_build.py [CORE]
-
-역할: configs/anchors/*.yml을 읽어 앵커 텍스트를 CLAP으로 임베딩 → 저장.
-
-입력: configs/anchors/<species>.yml (species, anchors: [{name,text,meaning,context}])
-
-출력:
-
-artifacts/text_anchors/{species}_text_anchors.npy — 앵커 임베딩
-
-artifacts/text_anchors/{species}_text_anchors.csv — 메타(name/text/meaning/context/index)
-
-artifacts/text_anchors/all_species_text_anchors_2d.csv — (시각화용) 전종 투영 테이블
-
-비고: **앵커 YAML은 ‘의미 기준점 사전’**이므로 가능한 한 안정적으로 유지.
-
-tuc/adjust.py [CORE]
-
-역할: configs/adjust.yml(v2 스키마)을 읽어 전역/종별 조정을 적용.
-
-지원 규칙:
-
-global_adjust: center(평균 제거), whiten, dim_keep, temperature, dimension_weights
-
-species_adjust: anchor_scales(개별 앵커 강/약), keyword_boosts(단어 기반 강조)
-
-출력: 각 종의 .npy/.csv가 덮어쓰기로 갱신(최종 앵커 위치/가중이 반영됨).
-
-tuc/search.py (파일명이 과거 serach.py였던 오타는 수정되어야 함) [CORE]
-
-역할: 최근접 검색(자연어 질의 → 앵커 Top-K).
-
-내부:
-
-앵커 임베딩 스택/메타 로드 (tuc/io.py)
-
-질의 문장 → tuc/encoder.encode_text() → 코사인 Top-K
-
-출력: artifacts/text_anchors/nearest_overall_top{k}.csv
-
-(제안/추가) nearest_from_vector(vec, k) : 실제 입력 벡터로 Top-K (아래 “PLANNED”)
-
-tuc/encoder.py [CORE]
-
-역할: CLAP(Text) 인코더 — encode_text(List[str]) -> np.ndarray[float32]
-
-ClapProcessor, ClapModel 로드(전역 캐시), get_text_features() → L2 정규화.
-
-체크포인트: laion/clap-htsat-fused (변경 가능)
-
-tuc/io.py [CORE]
-
-공용 I/O 유틸(경로 상수, YAML/CSV/NPY 로드/세이브, 앵커/메타 로딩 등).
-
-ART = Path("artifacts/text_anchors") 등 기본 경로를 여기서 일괄 관리.
-
-tuc/cli_input.py [ADAPTER/UTIL]
-
-CLI 인자/입력 처리 헬퍼.
-
-실제 임베딩 추출·검색 루틴과는 느슨하게 연결됨(확장 지점).
-
-tuc/ingest.py [ADAPTER/UTIL]
-
-폴더/파일 단위 입력을 읽어 전처리(간이 인제스트).
-
-대규모 데이터 파이프라인의 초석(선택적으로 사용).
-
-3) lib/ — 스크립트 & 입력 임베딩
-lib/scripts/apply_rules.py [SCRIPT]
-
-역할: 자연어 규칙(configs/rules/*_rules.yml)을 앵커 벡터에 직접 적용
-
-positive_pairs: "문구" ↔ anchor 를 가깝게
-
-negative_pairs: "문구" ↔ anchor 를 멀게
-
-tie_groups / separate_groups: 동일/상이 그룹을 모으거나/벌리기
-
-내부: 규칙의 text를 CLAP(Text)로 임베딩 → 해당 anchor 벡터를 소폭 이동(L2 정규화 유지)
-
-출력: {species}_text_anchors.rules.npy (또는 --inplace 덮어쓰기)
-
-lib/scripts/infer_behavior.py [SCRIPT]
-
-역할: 샘플 추론(예: 텍스트/파일 입력을 받아 Top-K 확인)
-
-현재: 텍스트 중심 예제. 실제 입력 벡터 직접 질의는 tuc/search.py에 보완 권장.
-
-lib/scripts/embed_text_anchors.py [SCRIPT]
-
-역할: tuc.cli build 를 감싼 래퍼. 앵커 임베딩 배치 생성.
-
-lib/scripts/reembed_with_adjust.py [SCRIPT]
-
-역할: 조정 후 재임베딩/리포팅 유틸(실험 편의).
-
-lib/scripts/project_text_anchors.py [SCRIPT/REPORT]
-
-역할: 전종 앵커 임베딩을 2D로 투영해 CSV/리포트를 만듦(시각화/QA용).
-
-lib/scripts/embed_from_folder.py [SCRIPT]
-
-역할: 폴더 단위 입력(오디오 등)을 읽어 배치 임베딩 생성(예제용).
-
-lib/ops/features/base.py [ADAPTER]
-
-역할: 입력 특징 추출의 베이스/프로토콜.
-
-오디오 로딩, 샘플링 등 공통 유틸.
-
-lib/ops/features/w2v2.py [ADAPTER]
-
-역할: Wav2Vec2 기반 오디오 임베더 예제.
-
-오디오 파일 → 고정길이 벡터(평균/Pool) 반환.
-
-실제 센서/행동 임베더로 교체하는 접점.
-
-4) configs/ — 설정/규칙
-configs/anchors/ [CFG]
-
-종별 앵커 정의: <species>.yml
-
-species: cornsnake
-anchors:
-  - name: tail_vibration
-    text: "Tail vibration as defensive warning"
-    meaning: "Defensive display"
-    context: "Threatened / cornered"
-
-
-주의: name은 종 내부에서 유일해야 하며, 다른 규칙 파일·페어 파일에서 참조됨.
-
-configs/adjust.yml [CFG]
-
-전역/종별 후처리 조정(v2 스키마):
-
-global_adjust: center/whiten/dim_keep/temperature/dimension_weights
-
-species_adjust:
-
-anchor_scales: 특정 앵커 가중 조정(>1 강화, <1 약화)
-
-keyword_boosts: 텍스트/의미/컨텍스트에 특정 키워드 포함 시 가중
-
-configs/rules/ [CFG]
-
-자연어 규칙으로 앵커 벡터 위치를 직접 이동:
-
-<species>_rules.yml
-
-positive_pairs / negative_pairs / tie_groups / separate_groups
-
-(선택) configs/linkages/ [CFG]
-
-행동 ↔ 앵커 페어링(정렬용) YAML 버전:
-
-species: cornsnake
-pairs:
-  - { behavior_id: clip_001, anchor: tail_vibration, weight: 1.0 }
-behavior_embeddings:
-  root: "artifacts/behaviors/cornsnake/"
-  pattern: "{behavior_id}.npy"
-
-5) artifacts/ — 산출물
-artifacts/text_anchors/ [ARTIFACT]
-
-{species}_text_anchors.npy — 앵커 임베딩 행렬
-
-{species}_text_anchors.csv — 메타(index/name/text/meaning/context)
-
-all_species_text_anchors_2d.csv — 전종 2D 투영(시각화/QA)
-
-nearest_overall_top{k}.csv — 자연어 질의 Top-K 결과
-
-{species}_text_anchors.rules.npy — 규칙 적용 결과(앵커 이동본)
-
-(선택) behavior_to_text_W.npy — 정렬(Alignment) 가중치 행렬(행동→텍스트)
-
-6) src/ / _archive_not_used/ — 레거시/보류
-src/tuc/cli.py [LEGACY]
-
-과거 CLI 래퍼(현행 tuc/cli.py와 중복).
-
-실행 경로에서 제외하거나 legacy/ 이동 권장.
-
-_archive_not_used/ [LEGACY]
-
-보류/미사용 코드 샘플. 참고용.
-
-정리 방법(권장):
-legacy/ 폴더를 만들고 src/tuc/*, _archive_not_used/*를 이동 → 실행 경로 간소화.
-(과거 코드 호환이 필요하면 src/tuc/__init__.py에 얇은 shim 추가)
-
-7) (선택) data/ — 보조 데이터
-data/pairs/ [CFG/RAW]
-
-정렬(Alignment) 학습용 페어 CSV:
-
-species,behavior_id,anchor,weight
-cornsnake,clip_0001,tail_vibration,1.0
-
-
-없다면 생략 가능. 행동 데이터 확보 후 도입.
-
-8) 실행 흐름(요약)
-
-앵커 임베딩 생성
-
-python -m tuc.cli build
-
-
-자연어 규칙 적용(앵커 이동) — 선택적이지만 현재 단계에서 핵심
-
-python lib/scripts/apply_rules.py --rules configs/rules --alpha 0.15 --gamma 0.1 --out-suffix rules
-
-
-후처리 조정(전역/종별)
-
-python -m tuc.cli adjust
-
-
-자연어 질의 검증
-
-python -m tuc.cli query --query "rapid tail vibration" --k 5
-
-
-(데이터 확보 후) 정렬(Alignment)
-
-학습:
-
-python lib/scripts/fit_alignment.py --pairs data/pairs/cornsnake_pairs.csv \
-  --emb-root artifacts/behaviors --out artifacts/text_anchors/behavior_to_text_W.npy
-
-
-적용/추론:
-
-python lib/scripts/apply_alignment.py --input path/to/behavior.npy --W artifacts/text_anchors/behavior_to_text_W.npy
-
-
-(제안/추가) CLI 통합: python -m tuc.cli infer --input path/to/vector.npy --k 5
-
-9) 용어(이 프로젝트 맥락)
-
-앵커(Anchor): 행동을 설명하는 기준 문장. 의미 공간의 기준점.
-
-의미(Meaning): 사람이 이해하는 라벨/설명(메타데이터).
-
-규칙(Rules): 자연어 문구로 앵커의 의미 방향을 끌어당기거나/밀어내는 조정.
-
-조정(Adjust): 전역/종별로 가중치·정규화를 적용하는 후처리(공간 품질 안정화).
-
-정렬(Alignment): 행동 임베딩 공간을 텍스트(앵커) 공간에 선형 변환으로 맞추는 단계.
+원하면 위 카드 양식을 내가 **한글/영문 두 버전**으로 더 깔끔하게 정리해서 한 장짜리 PDF로도 만들어줄게.
