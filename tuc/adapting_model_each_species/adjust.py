@@ -1,8 +1,8 @@
 # tuc/adjust.py
 from __future__ import annotations
 import numpy as np
-from .io import load_anchor_yamls, save_species_vectors, load_adjust
-from .encoder import encode_text
+from ..io import load_anchor_yamls, save_species_vectors, load_adjust
+from ..loading_base_model.encoder import encode_text
 
 def _l2n(v: np.ndarray) -> np.ndarray:
     return v / (np.linalg.norm(v) + 1e-9)

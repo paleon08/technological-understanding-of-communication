@@ -1,8 +1,8 @@
 # tuc/search.py
 from __future__ import annotations
 import numpy as np, csv
-from .io import load_species_vectors, load_queries, ART
-from .encoder import encode_text
+from ..io import load_species_vectors, load_queries, ART
+from ..loading_base_model.encoder import encode_text
 
 def _cosine(a: np.ndarray, B: np.ndarray) -> np.ndarray:
     return (a.reshape(1, -1) @ B.T).ravel()

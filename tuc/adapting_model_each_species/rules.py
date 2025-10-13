@@ -2,8 +2,8 @@
 from __future__ import annotations
 import numpy as np, yaml
 from pathlib import Path
-from .encoder import encode_text
-from .io import ART, load_species_matrix_and_meta, save_species_matrix
+from ..loading_base_model.encoder import encode_text
+from ..io import ART, load_species_matrix_and_meta, save_species_matrix
 
 def _l2n(v: np.ndarray) -> np.ndarray:
     n = np.linalg.norm(v, axis=-1, keepdims=True) + 1e-9

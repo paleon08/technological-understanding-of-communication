@@ -2,7 +2,7 @@
 from __future__ import annotations
 import numpy as np
 from .encoder import encode_text
-from .io import load_anchor_yamls, save_species_vectors, write_global_2d
+from ..io import load_anchor_yamls, save_species_vectors, write_global_2d
 
 def _svd2d(X: np.ndarray) -> np.ndarray:
     Xc = X - X.mean(0, keepdims=True)
