@@ -6,6 +6,9 @@ import numpy as np
 from .model_build import build_all
 from .search import nearest_overall, nearest_from_vector
 from .io import ART
+import os
+if os.getenv("TUC_MODE","text-only")=="text-only":
+    pass  # audio 관련 서브커맨드 안내만 출력하고 종료하도록(선택)
 
 def main():
     ap = argparse.ArgumentParser(

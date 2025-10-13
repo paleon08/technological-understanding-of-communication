@@ -1,74 +1,34 @@
-# tuc/encoder.py
+# tuc/encoder.py  — 텍스트 전용 간단 래퍼
 from __future__ import annotations
-from typing import List
-import numpy as np
+import os, numpy as np, torch
+from transformers import AutoTokenizer, AutoModel
 
-_SBERT = None
-try:
-    from sentence_transformers import SentenceTransformer  # optional
-    _SBERT = SentenceTransformer('all-MiniLM-L6-v2')
-except Exception:
-    _SBERT = None
+_DEFAULT_TEXT = os.getenv("TUC_TEXT_MODEL", "intfloat/e5-base-v2")
+_REQUIRE_TEXT = os.getenv("TUC_REQUIRE_TEXT", "1") == "1"  # 기본값: 텍스트 모델 필수
 
-def _l2n(x: np.ndarray, eps: float = 1e-12) -> np.ndarray:
-    n = np.linalg.norm(x, axis=-1, keepdims=True) + eps
-    return x / n
+_tok = _mdl = None
+_dev = "cuda" if torch.cuda.is_available() else "cpu"
 
-def encode_text(texts: List[str]) -> np.ndarray:
-    """
-    Encode list of sentences -> [N,D] L2-normalized float32 matrix.
-    Prefers SBERT if available; falls back to deterministic char-bag.
-    """
-    if _SBERT is not None:
-        try:
-            E = _SBERT.encode(texts, convert_to_numpy=True, normalize_embeddings=True)
-            E = E.astype(np.float32, copy=False)
-            return E
-        except Exception:
-            pass
+def _load():
+    global _tok, _mdl
+    if _mdl is not None: return
+    try:
+        _tok = AutoTokenizer.from_pretrained(_DEFAULT_TEXT)
+        _mdl = AutoModel.from_pretrained(_DEFAULT_TEXT).to(_dev).eval()
+        print(f"[tuc.encoder] text-model={_DEFAULT_TEXT} device={_dev}")
+    except Exception as e:
+        if __REQUIRE_TEXT:
+            raise RuntimeError(f"Text model required but failed: {e}")
+        raise
 
-    # Fallback: simple character-bag + L2 norm
-    dim = 256
-    out = np.zeros((len(texts), dim), dtype=np.float32)
-    for i, t in enumerate(texts):
-        v = np.zeros(dim, dtype=np.float32)
-        for ch in t:
-            v[ord(ch) % dim] += 1.0
-        out[i] = _l2n(v)
-    return out
-# --- 기존 encode_text 아래에 추가 ---
-from .alignment import apply_alignment
-
-class Projector:
-    """
-    통합 프로젝터:
-    - text(list[str]) -> encode_text
-    - audio(paths)    -> Wav2Vec2Embedder로 임베딩 후 (선택) 정렬행렬 W 적용
-    - apply(vecs)     -> 정렬행렬 W 적용만
-    """
-    def __init__(self, W: np.ndarray | None = None):
-        self.W = W
-
-    @classmethod
-    def from_alignment(cls, W_path: str | Path):
-        import numpy as np
-        W = np.load(W_path).astype("float32")
-        return cls(W)
-
-    def text(self, texts: list[str]) -> np.ndarray:
-        V = encode_text(texts)
-        return V
-
-    def audio(self, paths: list[str | Path]) -> np.ndarray:
-        try:
-            from tuc.ops.features.w2v2 import Wav2Vec2Embedder
-        except ModuleNotFoundError:
-            from .ops.features.w2v2 import Wav2Vec2Embedder  # 레거시 폴백
-        emb = Wav2Vec2Embedder()
-        vecs = [emb(p) for p in paths]
-        V = np.stack(vecs,0).astype("float32")
-        return self.apply(V)
-
-    def apply(self, V: np.ndarray) -> np.ndarray:
-        if self.W is None: return V
-        return apply_alignment(V, self.W).astype("float32")
+@torch.no_grad()
+def encode_text(texts: list[str]) -> np.ndarray:
+    _load()
+    toks = _tok(texts, padding=True, truncation=True, return_tensors="pt").to(_dev)
+    out  = _mdl(**toks)
+    last = getattr(out, "last_hidden_state", None)
+    if last is None:
+        raise RuntimeError("Model has no last_hidden_state; add model-specific pooling.")
+    vec  = last.mean(dim=1)                    # [B, D]
+    vec  = torch.nn.functional.normalize(vec, dim=-1)
+    return vec.detach().cpu().numpy().astype(np.float32)
