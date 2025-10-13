@@ -1,0 +1,24 @@
+species: crestedgecko
+
+positive_pairs:
+  - { text: "Slow tail waving as caution signal",                  anchor: tail_waving_slow,      weight: 1.0 }
+  - { text: "Rapid tail vibration indicates elevated warning",     anchor: tail_vibration_rapid,  weight: 1.0 }
+  - { text: "Scent rubbing as territorial marking",                anchor: territorial_marking,   weight: 1.0 }
+  - { text: "Distress chirping as alarm call",                     anchor: distress_chirping,     weight: 1.0 }
+  - { text: "Barking call in territorial disputes",                anchor: barking_call,          weight: 1.0 }
+  - { text: "Head shaking indicates refusal",                      anchor: head_shaking,          weight: 1.0 }
+  - { text: "Open-mouth threat display",                           anchor: open_mouth_threat,     weight: 1.0 }
+  - { text: "Mating bite during copulation",                       anchor: mating_bite,           weight: 1.0 }
+  - { text: "Escape jump to quickly leave danger",                 anchor: escape_jump,           weight: 1.0 }
+  - { text: "Tail autotomy as last-resort defense",                anchor: tail_autotomy,         weight: 1.0 }
+  - { text: "Fired-down calm with muted coloration",               anchor: fired_down_calm,       weight: 1.0 }
+  - { text: "Startle chirp as brief alarm",                        anchor: startle_chirp,         weight: 1.0 }
+  - { text: "Neutral roaming / investigation",                     anchor: exploration,           weight: 1.0 }
+
+tie_groups:
+  - [tail_waving_slow, tail_vibration_rapid, open_mouth_threat, distress_chirping, barking_call, tail_autotomy, startle_chirp]
+
+separate_groups:
+  - [[tail_waving_slow, tail_vibration_rapid, open_mouth_threat, distress_chirping, barking_call, tail_autotomy, startle_chirp],
+     [fired_down_calm, exploration, freeze]]
+  - [[territorial_marking], [fired_down_calm, exploration]]
