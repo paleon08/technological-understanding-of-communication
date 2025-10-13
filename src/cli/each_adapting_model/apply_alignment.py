@@ -4,9 +4,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path: sys.path.insert(0, str(ROOT))
 try:
-    from tuc.alignment import apply_alignment
+    from tuc.adapting_model_each_species.alignment import apply_alignment
 except ModuleNotFoundError:
-    from tuc.alignment import apply_alignment
+    from tuc.adapting_model_each_species.alignment import apply_alignment
 
 def main():
     ap = argparse.ArgumentParser()

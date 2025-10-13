@@ -18,7 +18,7 @@ def main():
     ap.add_argument("--out_dir", default="artifacts/inputs")
     args=ap.parse_args()
 
-    from tuc.encoder import Projector
+    from tuc.loading_base_model.encoder import Projector
     pj = Projector()
     out = Path(args.out_dir); out.mkdir(parents=True, exist_ok=True)
 

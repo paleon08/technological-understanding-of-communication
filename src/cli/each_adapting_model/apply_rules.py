@@ -8,9 +8,9 @@ if str(ROOT) not in sys.path: sys.path.insert(0, str(ROOT))
 # 규칙 로직은 패키지에 있음
 from tuc.io import load_species_matrix_and_meta, save_species_matrix
 try:
-    from tuc.rules import apply_rules_to_species   # 패키지 경로
+    from tuc.adapting_model_each_species.rules import apply_rules_to_species   # 패키지 경로
 except ModuleNotFoundError:
-    from tuc.rules import apply_rules_to_species   # 동일(레거시 호환)
+    from tuc.adapting_model_each_species.rules import apply_rules_to_species   # 동일(레거시 호환)
 
 def main():
     ap = argparse.ArgumentParser()

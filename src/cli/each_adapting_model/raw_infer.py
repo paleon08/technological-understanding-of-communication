@@ -25,8 +25,8 @@ def load_projection(npz_path):
     return out
 
 def infer_one(path, proj, A, metaA):
-    from tuc.ingest import Ingestor
-    from tuc.encoder import Projector
+    from tuc.loading_base_model.ingest import Ingestor
+    from tuc.loading_base_model.encoder import Projector
     ing, pj = Ingestor(), Projector()
     # 파일 종류 감지
     ext = Path(path).suffix.lower()

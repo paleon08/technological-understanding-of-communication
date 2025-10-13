@@ -1,7 +1,7 @@
 # lib/scripts/embed_from_folder.py
 from pathlib import Path
 import argparse
-from tuc import ingest
+from tuc.loading_base_model import ingest
 
 def main():
     ap = argparse.ArgumentParser()

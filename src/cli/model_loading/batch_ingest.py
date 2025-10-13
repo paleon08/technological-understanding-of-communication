@@ -1,6 +1,6 @@
 # scripts/batch_ingest.py
 from pathlib import Path
-from tuc.ingest import Ingestor
+from tuc.loading_base_model.ingest import Ingestor
 try:
     from tuc.ops.features.w2v2 import Wav2Vec2Embedder
 except ModuleNotFoundError:

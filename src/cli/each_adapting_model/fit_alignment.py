@@ -6,9 +6,9 @@ if str(ROOT) not in sys.path: sys.path.insert(0, str(ROOT))
 
 from tuc.io import ART
 try:
-    from tuc.alignment import fit_alignment
+    from tuc.adapting_model_each_species.alignment import fit_alignment
 except ModuleNotFoundError:
-    from tuc.alignment import fit_alignment  # 폴백
+    from tuc.adapting_model_each_species.alignment import fit_alignment  # 폴백
 
 def main():
     ap = argparse.ArgumentParser()
