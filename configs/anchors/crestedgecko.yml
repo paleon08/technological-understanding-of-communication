@@ -1,4 +1,4 @@
-species: crested_gecko
+species: crestedgecko
 anchors:
   - name: tail_waving_slow
     text: "Tail waving (slow)"

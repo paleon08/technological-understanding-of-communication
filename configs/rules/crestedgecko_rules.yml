@@ -2,10 +2,9 @@ species: crestedgecko
 
 positive_pairs:
   - { text: "Slow tail waving as caution signal",                  anchor: tail_waving_slow,      weight: 1.0 }
-  - { text: "Rapid tail vibration indicates elevated warning",     anchor: tail_vibration_rapid,  weight: 1.0 }
-  - { text: "Scent rubbing as territorial marking",                anchor: territorial_marking,   weight: 1.0 }
-  - { text: "Distress chirping as alarm call",                     anchor: distress_chirping,     weight: 1.0 }
-  - { text: "Barking call in territorial disputes",                anchor: barking_call,          weight: 1.0 }
+  - { text: "rapid tail vibration",         anchor: tail_vibration_rapid, weight: 1.0 }
+  - { text: "scent rubbing on surfaces",    anchor: territorial_marking,  weight: 1.0 }
+  - { text: "2-5 short chirps (repeated)",  anchor: distress_chirping,    weight: 1.0 }  - { text: "Barking call in territorial disputes",                anchor: barking_call,          weight: 1.0 }
   - { text: "Head shaking indicates refusal",                      anchor: head_shaking,          weight: 1.0 }
   - { text: "Open-mouth threat display",                           anchor: open_mouth_threat,     weight: 1.0 }
   - { text: "Mating bite during copulation",                       anchor: mating_bite,           weight: 1.0 }

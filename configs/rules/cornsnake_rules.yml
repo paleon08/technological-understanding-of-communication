@@ -1,10 +1,10 @@
 ﻿species: cornsnake
 
 positive_pairs:
-  - { text: "Tail vibration as defensive warning",                 anchor: tail_vibration,        weight: 1.0 }
-  - { text: "Hissing is a warning deterrent",                      anchor: defensive_hiss,        weight: 1.0 }
-  - { text: "Flattening body to look larger when threatened",      anchor: body_flattening,       weight: 1.0 }
-  - { text: "S-coil pre-strike posture",                           anchor: s_coil_pose,           weight: 1.0 }
+  - { text: "rapid tail vibration",         anchor: tail_vibration,      weight: 1.0 }
+  - { text: "forceful hissing (exhalation)",anchor: defensive_hiss,      weight: 1.0 }
+  - { text: "body flattening posture",      anchor: body_flattening,     weight: 1.0 }
+  - { text: "tight S-shaped coil",          anchor: s_coil_pose,         weight: 1.0 }
   - { text: "Fast bluff strike to scare threats",                  anchor: bluff_strike,          weight: 1.0 }
   - { text: "Release of foul-smelling musk for chemical defense",  anchor: musking,               weight: 1.0 }
   - { text: "Freezing immobility for camouflage",                  anchor: freezing,              weight: 1.0 }
