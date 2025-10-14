@@ -1,6 +1,42 @@
-artifacts/
-data/
-*.npy
-*.wav
-**/__pycache__/
-*.pyc
+# ===== Python caches / build =====
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+.coverage
+coverage.xml
+htmlcov/
+dist/
+build/
+*.egg-info/
+
+# ===== Virtual envs / editor =====
+.venv/
+venv/
+env/
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# ===== Project artifacts (keep directory only) =====
+artifacts/**
+!artifacts/.gitkeep
+artifacts/text_anchors/**
+!artifacts/text_anchors/.gitkeep
+artifacts/reports/**
+!artifacts/reports/.gitkeep
+
+# ===== Logs / temp =====
+logs/
+*.log
+
+# ===== Data (선택: 필요 시만) =====
+# data/**   # 전체 데이터 제외 시
+# !data/README.md
+# !data/samples/**
