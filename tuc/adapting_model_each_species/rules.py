@@ -59,5 +59,5 @@ def apply_rules_to_species(rules_path: Path, alpha: float = 0.15, gamma: float =
         for i in A: V[i] = _l2n(V[i] + gamma * (V[i] - cb))
         for i in B: V[i] = _l2n(V[i] + gamma * (V[i] - ca))
 
-    out = save_species_matrix(species, V, suffix=None if inplace else out_suffix)
+    out = save_species_matrix(species, V, meta, suffix=None if inplace else out_suffix)
     return out
