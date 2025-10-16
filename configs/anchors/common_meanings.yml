@@ -1,0 +1,16 @@
+# configs/anchors/common_meanings.yml
+species: common   # 종-무관 캐논
+
+anchors:
+  - name: meaning.alarm_low
+    prompt: "low-level alert; brief startle; quick recovery; single short chirp; minor freeze"
+  - name: meaning.alarm_high
+    prompt: "sustained high alert; defensive posture; repeated distress cues; avoidance; open-mouth threat"
+  - name: meaning.exploration
+    prompt: "calm investigation; tongue flicks or sniffing; relaxed locomotion; environment scanning"
+  - name: meaning.resting_calm
+    prompt: "resting and calm; no avoidance; steady breathing; relaxed body; basking posture"
+  - name: meaning.attention_orient
+    prompt: "orienting toward stimulus; head turn; brief pause; focused attention without approach or avoidance"
+  - name: meaning.courtship
+    prompt: "courtship interest; approach with non-aggressive intent; rhythmic display; soft repetitive cues"
