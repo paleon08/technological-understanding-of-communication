@@ -1,6 +1,6 @@
 import argparse, os, yaml, json, uuid
 import numpy as np
-from tuc import ingest
+from tuc.loading_base_model import ingest
 
 def _load_projection(path: str):
     if not os.path.isfile(path):
@@ -17,8 +17,8 @@ def save_vector(q: np.ndarray, meta, out_dir: str) -> str:
     return key
 
 def main():
-    from .ingest import Ingestor
-    from .encoder import Projector
+    from tuc.loading_base_model.ingest import Ingestor
+    from tuc.loading_base_model.encoder import Projector
 
     p = argparse.ArgumentParser(description="TUC 입력→임베딩 벡터 생성(MVP)")
     sub = p.add_subparsers(dest='cmd', required=True)
