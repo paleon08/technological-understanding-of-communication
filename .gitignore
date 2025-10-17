@@ -35,6 +35,7 @@ artifacts/reports/**
 # ===== Logs / temp =====
 logs/
 *.log
+*.zip
 
 # ===== Data (선택: 필요 시만) =====
 # data/**   # 전체 데이터 제외 시
