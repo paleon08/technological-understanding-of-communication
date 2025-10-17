@@ -1,73 +1,50 @@
 species: cornsnake
 anchors:
-  - name: tail_vibration
-    text: "Tail vibration"
-    meaning: "꼬리를 빠르게 흔들어 경고음 생성"
-    context: "포식자 회피, 방어 경고 신호"
-    source: "콜루브리드과 뱀 방어행동 문헌"
-
-  - name: defensive_hiss
-    text: "Defensive hiss"
-    meaning: "숨을 강하게 내쉬어 ‘쉿’ 소리를 내며 위협"
-    context: "포식자 접근 또는 사람의 접촉 시"
-    source: "뱀 방어행동 보고서 및 사육 기록"
-
-  - name: body_flattening
-    text: "Body flattening"
-    meaning: "몸을 납작하게 펴서 독사처럼 보이게 함"
-    context: "포식자 마주침 시 의태적 방어"
-    source: "베이츠식 의태 행동 문헌 기반"
-
-  - name: s_coil_pose
-    text: "S-coil strike pose"
-    meaning: "머리를 뒤로 감아 공격 준비 자세를 취함"
-    context: "도망 불가 시 방어 태세 진입"
-    source: "사육 관찰 및 방어 자세 연구"
-
-  - name: bluff_strike
-    text: "Bluff strike"
-    meaning: "물 듯이 공격 시늉 또는 실제 물기"
-    context: "지속적 위협 상황, 최후 방어 수단"
-    source: "쥐잡이뱀 문헌 및 관찰 보고"
-
-  - name: musking
-    text: "Musking"
-    meaning: "악취 분비액으로 포식자를 기피시킴"
-    context: "붙잡혔을 때 또는 극도 스트레스 상황"
-    source: "콜루브리드류 방어행동 문헌 기반"
-
-  - name: freezing
-    text: "Freezing (immobility)"
-    meaning: "움직임을 멈춰 위장 및 회피"
-    context: "포식자 탐지 초기 단계"
-    source: "뱀 방어단계 행동 연구"
-
-  - name: rapid_fleeing
-    text: "Rapid fleeing"
-    meaning: "빠르게 도망가 위험 회피"
-    context: "공간적 여유 있을 때 초기 반응"
-    source: "뱀 행동 연구 및 사육 기록"
-
-  - name: pheromone_trailing
-    text: "Pheromone trailing"
-    meaning: "페로몬 냄새로 짝의 위치 탐색"
-    context: "번식기, 수컷이 암컷 찾을 때"
-    source: "화학적 의사소통 연구 보고"
-
-  - name: male_combat
-    text: "Male combat"
-    meaning: "수컷 간 몸을 휘감는 경쟁행동"
-    context: "교미철 수컷 경쟁"
-    source: "쥐뱀류 교미행동 문헌 기반"
-
-  - name: courtship_tail_quiver
-    text: "Courtship tail quiver"
-    meaning: "교미 전 수컷이 꼬리를 미세하게 진동"
-    context: "짝짓기 중 암컷 수용 유도"
-    source: "Colubridae 구애 행동 보고"
-
-  - name: calm_tongue_flicking
-    text: "Calm tongue flicking"
-    meaning: "혀를 느리게 내밀며 환경 탐색"
-    context: "안정 상태, 무스트레스 상황"
-    source: "사육 보고서 및 기본 탐색 행동 연구"
+- name: tail_vibration_meaning
+  canonical_text: "꼬리를 빠르게 흔들어 경고음 생성"
+  aliases:
+  - tail_vibration
+- name: defensive_hiss_meaning
+  canonical_text: "숨을 강하게 내쉬어 ‘쉿’ 소리를 내며 위협"
+  aliases:
+  - defensive_hiss
+- name: body_flattening_meaning
+  canonical_text: "몸을 납작하게 펴서 독사처럼 보이게 함"
+  aliases:
+  - body_flattening
+- name: s_coil_pose_meaning
+  canonical_text: "머리를 뒤로 감아 공격 준비 자세를 취함"
+  aliases:
+  - s_coil_pose
+- name: bluff_strike_meaning
+  canonical_text: "물 듯이 공격 시늉 또는 실제 물기"
+  aliases:
+  - bluff_strike
+- name: musking_meaning
+  canonical_text: "악취 분비액으로 포식자를 기피시킴"
+  aliases:
+  - musking
+- name: freezing_meaning
+  canonical_text: "움직임을 멈춰 위장 및 회피"
+  aliases:
+  - freezing
+- name: rapid_fleeing_meaning
+  canonical_text: "빠르게 도망가 위험 회피"
+  aliases:
+  - rapid_fleeing
+- name: pheromone_trailing_meaning
+  canonical_text: "페로몬 냄새로 짝의 위치 탐색"
+  aliases:
+  - pheromone_trailing
+- name: male_combat_meaning
+  canonical_text: "수컷 간 몸을 휘감는 경쟁행동"
+  aliases:
+  - male_combat
+- name: courtship_tail_quiver_meaning
+  canonical_text: "교미 전 수컷이 꼬리를 미세하게 진동"
+  aliases:
+  - courtship_tail_quiver
+- name: calm_tongue_flicking_meaning
+  canonical_text: "혀를 느리게 내밀며 환경 탐색"
+  aliases:
+  - calm_tongue_flicking

@@ -31,17 +31,26 @@ def rebuild_with_adjust():
     adj = load_adjust()
     for species, anchors in load_anchor_yamls():
         texts, rows = [], []
+        # [교체]
+        def _normalize_meaning_name(name: str) -> str:
+            name = (name or "").strip()
+            return name if name.endswith("_meaning") else f"{name}_meaning"
+
         for i, a in enumerate(anchors):
             if isinstance(a, str):
-                rows.append({"name": f"anchor_{i:03d}", "text": a, "meaning": "", "context": "", "species": species})
+                nm = _normalize_meaning_name(f"anchor_{i:03d}")
+                rows.append({"name": nm, "text": a, "meaning": a, "context": "", "species": species})
                 texts.append(a)
             else:
-                t = a.get("text") or a.get("phrase") or a.get("anchor") or ""
+                t = a.get("canonical_text") or a.get("meaning") or a.get("text") or a.get("phrase") or a.get("anchor") or ""
                 if not t: continue
-                rows.append({"name": a.get("name", f"anchor_{i:03d}"),
-                             "text": t, "meaning": a.get("meaning",""),
-                             "context": a.get("context",""), "species": species})
+                raw_nm = a.get("name", f"anchor_{i:03d}")
+                nm = _normalize_meaning_name(raw_nm)
+                rows.append({"name": nm,
+                            "text": t, "meaning": t,
+                            "context": a.get("context",""), "species": species})
                 texts.append(t)
+
         if not texts: 
             continue
         V = encode_text(texts)          # 기본 임베딩

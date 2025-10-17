@@ -1,19 +1,22 @@
 ﻿species: cornsnake
 
+# 행동(관찰문) → 의미 앵커(anchors/*.yml의 *_meaning)
 positive_pairs:
-  - { text: "rapid tail vibration",         anchor: tail_vibration,      weight: 1.0 }
-  - { text: "forceful hissing (exhalation)",anchor: defensive_hiss,      weight: 1.0 }
-  - { text: "body flattening posture",      anchor: body_flattening,     weight: 1.0 }
-  - { text: "tight S-shaped coil",          anchor: s_coil_pose,         weight: 1.0 }
-  - { text: "Fast bluff strike to scare threats",                  anchor: bluff_strike,          weight: 1.0 }
-  - { text: "Release of foul-smelling musk for chemical defense",  anchor: musking,               weight: 1.0 }
-  - { text: "Freezing immobility for camouflage",                  anchor: freezing,              weight: 1.0 }
-  - { text: "Rapid fleeing to escape danger",                      anchor: rapid_fleeing,         weight: 1.0 }
-  - { text: "Following pheromone trails during breeding",          anchor: pheromone_trailing,    weight: 1.0 }
-  - { text: "Male combat to establish dominance",                  anchor: male_combat,           weight: 1.0 }
-  - { text: "Courtship tail quiver near female",                   anchor: courtship_tail_quiver, weight: 1.0 }
-  - { text: "Calm tongue flicking for exploration",                anchor: calm_tongue_flicking,  weight: 1.0 }
+  - { text: "Rapid tail-tip vibration against substrate (audible)",           anchor: tail_vibration_meaning,           weight: 1.0 }
+  - { text: "Forceful exhalation producing hiss",                              anchor: defensive_hiss_meaning,           weight: 1.0 }
+  - { text: "Dorsoventral body flattening",                                    anchor: body_flattening_meaning,          weight: 1.0 }
+  - { text: "Head retracted; S-shaped neck; strike-ready posture",             anchor: s_coil_pose_meaning,              weight: 1.0 }
+  - { text: "Forward strike (contact optional)",                               anchor: bluff_strike_meaning,             weight: 1.0 }
+  - { text: "Cloacal musk release",                                            anchor: musking_meaning,                  weight: 1.0 }
+  - { text: "Whole-body immobility ≥2 s",                                      anchor: freezing_meaning,                 weight: 1.0 }
+  - { text: "Fast linear locomotion away from stimulus",                       anchor: rapid_fleeing_meaning,            weight: 1.0 }
+  - { text: "Tongue-flick trail following along substrate",                    anchor: pheromone_trailing_meaning,       weight: 1.0 }
+  - { text: "Male–male entwining and pushing",                                 anchor: male_combat_meaning,              weight: 1.0 }
+  - { text: "Fine tail quiver near cloaca during courtship",                   anchor: courtship_tail_quiver_meaning,    weight: 1.0 }
+  - { text: "Slow tongue-flicking with low-speed locomotion",                  anchor: calm_tongue_flicking_meaning,     weight: 1.0 }
 
+# 아래 두 블록은 형식 유지용으로 보존하되, v2에서는 기하학적 이동에 쓰지 않음.
+# DEPRECATED: geometric constraints (kept for reference only)
 tie_groups:
   - [tail_vibration, defensive_hiss, body_flattening, s_coil_pose, bluff_strike, musking, freezing]
 
