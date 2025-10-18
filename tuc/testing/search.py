@@ -5,7 +5,7 @@ from pathlib import Path
 import numpy as np
 import yaml
 
-from ..io import load_species_vectors, load_queries, ART, CFG
+from ..io import load_species_matrix_and_meta, load_species_vectors, load_queries, ART, CFG
 from ..loading_base_model.encoder import encode_text
 
 # ====== Tunables (env 로도 설정 가능) ======
