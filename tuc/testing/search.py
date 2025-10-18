@@ -198,3 +198,28 @@ def nearest_from_vector(vec: np.ndarray, k: int = 5):
             "context": m.get("context",""),
         })
     return out
+def nearest_for_species_text(species: str, qtxt: str, k: int = 5):
+    X, metas, _ = load_species_matrix_and_meta(species)
+    qv = encode_text(qtxt).astype("float32")
+    sim = _cosine(qv, X)
+
+    alias_map = _build_alias_map_from_configs()
+    rules_prior = _load_rules_prior_table()
+    adjust_prior = _load_adjust_prior_table(alias_map)
+    pri = _build_prior_vector(metas, rules_prior, adjust_prior)
+
+    sc = sim + pri
+    idx = np.argsort(-sc)[:k]
+    out = []
+    for rnk, i in enumerate(idx, 1):
+        m = metas[i]
+        out.append({
+            "rank": rnk,
+            "score": float(sc[i]),
+            "species": m.get("species",""),
+            "name": m.get("name",""),
+            "text": m.get("text",""),
+            "meaning": m.get("meaning",""),
+            "context": m.get("context",""),
+        })
+    return out
