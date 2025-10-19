@@ -14,8 +14,19 @@ ADJUST_PRIOR_WEIGHT = float(os.environ.get("TUC_ADJUST_PRIOR_WEIGHT", "0.15"))
 
 # ====== Basic cosine (dot if L2-normalized) ======
 def _cosine(q: np.ndarray, X: np.ndarray) -> np.ndarray:
-    q = q.reshape(1, -1).astype("float32")
-    return (q @ X.T).ravel()
+    q2 = np.array(q, dtype="float32")
+    if q2.ndim == 1:
+        # [768] -> [1,768]
+        q2 = q2.reshape(1, -1)
+    elif q2.ndim == 2:
+        # 실수로 배치가 생긴 경우(예: 문자열을 encode_text에 직접 넣음)
+        # 올바른 경우라면 열(768)이 일치하므로 그 평균을 단일 쿼리로 사용
+        if q2.shape[1] == X.shape[1]:
+            q2 = q2.mean(axis=0, keepdims=True)
+        else:
+            raise ValueError(f"Incompatible query shape {q2.shape} for X {X.shape}. "
+                             f"Pass a list: encode_text([qtxt]) or use --behavior as list-of-one.")
+    return (q2 @ X.T).ravel()
 
 # ====== Load prior tables from YAMLs ======
 def _normalize_meaning_name(name: str) -> str:
@@ -139,7 +150,7 @@ def nearest_overall(k: int = 5, queries: list[str] | None = None):
 
     out_rows = []
     for qtxt in queries:
-        qv = encode_text(qtxt).astype("float32")
+        qv = encode_text([qtxt])[0].astype("float32")
         sim = _cosine(qv, X)
         pri = _build_prior_vector(metas, rules_prior, adjust_prior)
         sc = sim + pri
@@ -200,7 +211,7 @@ def nearest_from_vector(vec: np.ndarray, k: int = 5):
     return out
 def nearest_for_species_text(species: str, qtxt: str, k: int = 5):
     X, metas, _ = load_species_matrix_and_meta(species)
-    qv = encode_text(qtxt).astype("float32")
+    qv = encode_text([qtxt])[0].astype("float32")
     sim = _cosine(qv, X)
 
     alias_map = _build_alias_map_from_configs()

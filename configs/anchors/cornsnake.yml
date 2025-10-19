@@ -1,50 +1,61 @@
 species: cornsnake
 anchors:
 - name: tail_vibration_meaning
-  canonical_text: "꼬리를 빠르게 흔들어 경고음 생성"
+  canonical_text: "Rapidly vibrates the tail to produce a warning sound."
   aliases:
   - tail_vibration
+
 - name: defensive_hiss_meaning
-  canonical_text: "숨을 강하게 내쉬어 ‘쉿’ 소리를 내며 위협"
+  canonical_text: "Forcefully exhales to make a loud hiss as a threat."
   aliases:
   - defensive_hiss
+
 - name: body_flattening_meaning
-  canonical_text: "몸을 납작하게 펴서 독사처럼 보이게 함"
+  canonical_text: "Flattens the body to appear viper-like."
   aliases:
   - body_flattening
+
 - name: s_coil_pose_meaning
-  canonical_text: "머리를 뒤로 감아 공격 준비 자세를 취함"
+  canonical_text: "Pulls the head back into an S-shaped coil, ready to strike."
   aliases:
   - s_coil_pose
+
 - name: bluff_strike_meaning
-  canonical_text: "물 듯이 공격 시늉 또는 실제 물기"
+  canonical_text: "Performs a mock strike or actually bites."
   aliases:
   - bluff_strike
+
 - name: musking_meaning
-  canonical_text: "악취 분비액으로 포식자를 기피시킴"
+  canonical_text: "Releases foul-smelling musk to deter predators."
   aliases:
   - musking
+
 - name: freezing_meaning
-  canonical_text: "움직임을 멈춰 위장 및 회피"
+  canonical_text: "Freezes motion to camouflage and avoid detection."
   aliases:
   - freezing
+
 - name: rapid_fleeing_meaning
-  canonical_text: "빠르게 도망가 위험 회피"
+  canonical_text: "Flees quickly to escape danger."
   aliases:
   - rapid_fleeing
+
 - name: pheromone_trailing_meaning
-  canonical_text: "페로몬 냄새로 짝의 위치 탐색"
+  canonical_text: "Follows pheromone scent trails to locate a mate."
   aliases:
   - pheromone_trailing
+
 - name: male_combat_meaning
-  canonical_text: "수컷 간 몸을 휘감는 경쟁행동"
+  canonical_text: "Male–male combat with body entwining and wrestling."
   aliases:
   - male_combat
+
 - name: courtship_tail_quiver_meaning
-  canonical_text: "교미 전 수컷이 꼬리를 미세하게 진동"
+  canonical_text: "During courtship, the male rapidly quivers the tail."
   aliases:
   - courtship_tail_quiver
+
 - name: calm_tongue_flicking_meaning
-  canonical_text: "혀를 느리게 내밀며 환경 탐색"
+  canonical_text: "Slow tongue flicks to sample the environment."
   aliases:
   - calm_tongue_flicking

@@ -1,58 +1,71 @@
 species: crestedgecko
 anchors:
 - name: tail_waving_slow_meaning
-  canonical_text: "느리게 꼬리를 흔들며 스트레스를 표현하고 경고 신호를 보냄"
+  canonical_text: "Slow tail waving that signals stress; a warning display."
   aliases:
   - tail_waving_slow
+
 - name: tail_vibration_rapid_meaning
-  canonical_text: "빠르게 꼬리를 진동시켜 흥분 또는 공격/구애 신호를 보냄"
+  canonical_text: "Rapid tail vibration indicating arousal or aggression/courtship signaling."
   aliases:
   - tail_vibration_rapid
+
 - name: territorial_marking_meaning
-  canonical_text: "수컷이 향기 분비물과 꼬리 흔들기로 영역 표시"
+  canonical_text: "Male marks territory with scent secretions and tail movements."
   aliases:
   - territorial_marking
+
 - name: distress_chirping_meaning
-  canonical_text: "두려움이나 불편함을 나타내는 짧은 울음소리"
+  canonical_text: "Short distress chirps indicating fear or discomfort."
   aliases:
   - distress_chirping
+
 - name: barking_call_meaning
-  canonical_text: "짖는 듯한 발성으로 영역 또는 번식 신호 전달"
+  canonical_text: "Barking-like call used for territorial or breeding signals."
   aliases:
   - barking_call
+
 - name: head_shaking_meaning
-  canonical_text: "머리를 흔들어 거부 또는 싫음을 표현"
+  canonical_text: "Shakes the head to signal refusal or dislike."
   aliases:
   - head_shaking
+
 - name: open_mouth_threat_meaning
-  canonical_text: "입을 벌려 상대를 위협, 공격 경고 신호"
+  canonical_text: "Opens the mouth to threaten; an aggressive warning signal."
   aliases:
   - open_mouth_threat
+
 - name: mating_bite_meaning
-  canonical_text: "수컷이 암컷의 몸을 살짝 물며 교미 자세 고정"
+  canonical_text: "Male lightly bites the female to maintain the mating position."
   aliases:
   - mating_bite
+
 - name: escape_jump_meaning
-  canonical_text: "위협 시 갑작스럽게 점프하여 도주"
+  canonical_text: "Performs a sudden escape jump when threatened."
   aliases:
   - escape_jump
+
 - name: tail_autotomy_meaning
-  canonical_text: "꼬리를 절단해 주의를 끌고 도망"
+  canonical_text: "Drops the tail (autotomy) to distract and flee."
   aliases:
   - tail_autotomy
+
 - name: fired_down_calm_meaning
-  canonical_text: "색이 옅어지고 움직임이 느려지는 평온 상태"
+  canonical_text: "Color lightens and movement slows; a calm 'fired-down' state."
   aliases:
   - fired_down_calm
+
 - name: startle_chirp_meaning
-  canonical_text: "놀람/경계"
+  canonical_text: "Emits a startle/alarm chirp."
   aliases:
   - startle_chirp
+
 - name: freeze_meaning
-  canonical_text: "경계/탐색"
+  canonical_text: "Freezes in place while remaining alert."
   aliases:
   - freeze
+
 - name: exploration_meaning
-  canonical_text: "탐색"
+  canonical_text: "Actively explores the surroundings."
   aliases:
   - exploration
